@@ -1,4 +1,5 @@
-use bevy::{prelude::*, render::view::window, window::PrimaryWindow};
+use bevy::{prelude::*, window::PrimaryWindow};
+use rand::prelude::*;
 
 const PLANE_X: f32 = 200.0;
 const PLANE_SIZE: Vec3 = Vec3::new(PLANE_X, 3.0, 0.0);
@@ -6,6 +7,7 @@ const PLANE: f32 = 48.0;
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SIZE: f32 = 70.0;
 pub const OBJECT_SPEED: f32 = 300.0;
+pub const NUMBER_OF_ENEMIES: usize = 2;
 
 fn main() {
     App::new()
@@ -13,7 +15,8 @@ fn main() {
     .add_startup_system(spawn_player)
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
-    .add_startup_system(spawn_object)
+    // .add_startup_system(spawn_object)
+    .add_startup_system(spawn_enemy)
     .add_system(player_movement)
     .add_system(object_movement)
     .add_system(confine_player_movement)
@@ -22,6 +25,10 @@ fn main() {
 }
 #[derive(Component)]
 pub struct Player{}
+
+
+#[derive(Component)]
+pub struct Enemy{}
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -42,12 +49,35 @@ pub fn spawn_player(
                     scale: Vec3::new(3.0, 3.0, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/mario2.png"),
+                    texture: assert_server.load("sprites/mario_re.png"),
                     ..default()
             },
             Player{},
         )
     );
+}
+
+pub fn spawn_enemy(
+    mut commands: Commands,
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    assert_server: Res<AssetServer>,
+){
+    let window: &Window = window_query.get_single().unwrap();
+    for _ in 0..NUMBER_OF_ENEMIES{
+        let random_x = random::<f32>() * window.width();
+        let random_y = random::<f32>() * window.height();
+        
+        commands.spawn(
+            (
+                SpriteBundle{
+                    transform: Transform::from_xyz(random_x, window.height() - 100.0, 0.0),
+                    texture: assert_server.load("sprites/lakitu2.png"),
+                    ..default()
+                },
+                Enemy{},
+            )
+        );
+    }
 }
 
 
@@ -61,10 +91,11 @@ pub fn player_movement(
 
         if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A){
             direction += Vec3::new(-1.0, 0.0, 0.0);
+            transform.scale = Vec3::new(-1.0, 1.0, 0.0);
         }
         if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D){
             direction += Vec3::new(1.0, 0.0, 0.0);
-            
+            transform.scale = Vec3::new(1.0, 1.0, 0.0);
         }
         // if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W){
         //     direction += Vec3::new(0.0, 1.0, 0.0);
@@ -142,9 +173,6 @@ pub fn confine_player_movement(
             translation.y = y_max;
         }
         player_transform.translation = translation;
-        // println!("{} {}", window.width(), window.height());
-        // println!("{}, {} ", translation.x, translation.y);
-
     }
 }
 
@@ -152,11 +180,7 @@ pub fn confine_player_movement(
 #[derive(Component)]
 pub struct Object{
     pub name: String,
-}
-
-#[derive(Component)]
-pub struct Velocity{
-    pub speed: Vec3,
+    pub velocity: f64,
 }
 
 pub fn spawn_object(
@@ -178,9 +202,7 @@ pub fn spawn_object(
             },
             Object{
                 name: "kimsuhanmu".to_string(),
-            },
-            Velocity{
-                speed: Vec3::new(1.0, 0.0, 0.0)
+                velocity: 3.0,
             },
         )
     );
