@@ -4,8 +4,7 @@ const PLANE_X: f32 = 200.0;
 const PLANE_SIZE: Vec3 = Vec3::new(PLANE_X, 3.0, 0.0);
 const PLANE: f32 = 48.0;
 pub const PLAYER_SPEED: f32 = 500.0;
-pub const PLAYER_SIZE: f32 = 64.0;
-pub const OBJECT_SPEED: f32 = 300.0;
+pub const PLAYER_SIZE: f32 = 70.0;
 
 fn main() {
     App::new()
@@ -37,11 +36,11 @@ pub fn spawn_player(
             // },
             SpriteBundle{
                 transform: Transform{
-                    translation: Vec3::new(window.width() / 2.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
+                    translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
                     scale: Vec3::new(3.0, 3.0, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/Characters/character_0004.png"),
+                    texture: assert_server.load("sprites/mario2.png"),
                     ..default()
             },
             Player{},
@@ -52,7 +51,7 @@ pub fn spawn_player(
 
 pub fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
-    mut player_query: Query<&mut Transform,  With<Player>>,
+    mut player_query: Query<&mut Transform,With<Player>>,
     time: Res<Time>,
 ){
     if let Ok(mut transform) = player_query.get_single_mut(){
@@ -63,6 +62,7 @@ pub fn player_movement(
         }
         if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D){
             direction += Vec3::new(1.0, 0.0, 0.0);
+            
         }
         // if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W){
         //     direction += Vec3::new(0.0, 1.0, 0.0);
@@ -140,8 +140,8 @@ pub fn confine_player_movement(
             translation.y = y_max;
         }
         player_transform.translation = translation;
-        println!("{} {}", window.width(), window.height());
-        println!("{}, {} ", translation.x, translation.y);
+        // println!("{} {}", window.width(), window.height());
+        // println!("{}, {} ", translation.x, translation.y);
 
     }
 }
