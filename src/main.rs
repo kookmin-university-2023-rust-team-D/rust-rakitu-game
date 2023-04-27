@@ -2,6 +2,7 @@ use bevy::{prelude::*, render::view::window, window::PrimaryWindow};
 
 const PLANE_X: f32 = 200.0;
 const PLANE_SIZE: Vec3 = Vec3::new(PLANE_X, 3.0, 0.0);
+const PLANE: f32 = 48.0;
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SIZE: f32 = 64.0;
 
@@ -27,10 +28,19 @@ pub fn spawn_player(
     let window: &Window = window_query.get_single().unwrap();
     commands.spawn(
         (
+            // SpriteBundle{
+            //     transform: Transform::from_xyz(window.width() / 3.0, window.height() / 3.0, 0.0), // z component doesn't matter in 2D game
+            //     texture: assert_server.load("sprites/Characters/character_0004.png"),
+            //     ..default()
+            // },
             SpriteBundle{
-                transform: Transform::from_xyz(window.width() / 3.0, window.height() / 3.0, 0.0), // z component doesn't matter in 2D game
-                texture: assert_server.load("sprites/Characters/character_0004.png"),
-                ..default()
+                transform: Transform{
+                    translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
+                    scale: Vec3::new(3.0, 3.0, 0.0),
+                    ..default()
+                },
+                    texture: assert_server.load("sprites/Characters/character_0004.png"),
+                    ..default()
             },
             Player{},
         )
@@ -52,12 +62,12 @@ pub fn player_movement(
         if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D){
             direction += Vec3::new(1.0, 0.0, 0.0);
         }
-        if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W){
-            direction += Vec3::new(0.0, 1.0, 0.0);
-        }
-        if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S){
-            direction += Vec3::new(0.0, -1.0, 0.0);
-        }
+        // if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W){
+        //     direction += Vec3::new(0.0, 1.0, 0.0);
+        // }
+        // if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S){
+        //     direction += Vec3::new(0.0, -1.0, 0.0);
+        // }
 
         if direction.length() > 0.0{
             direction = direction.normalize();
@@ -112,7 +122,7 @@ pub fn confine_player_movement(
 
         let x_min = 0.0 + half_player_size;
         let x_max = window.width() -  half_player_size;
-        let y_min = 0.0 + half_player_size;
+        let y_min = 0.0 + half_player_size + PLANE;
         let y_max = window.height() - half_player_size;
         let mut translation = player_transform.translation;
 
@@ -128,8 +138,8 @@ pub fn confine_player_movement(
             translation.y = y_max;
         }
         player_transform.translation = translation;
-        // println!("{} {}", window.width(), window.height());
-        // println!("{}, {} ", translation.x, translation.y);
+        println!("{} {}", window.width(), window.height());
+        println!("{}, {} ", translation.x, translation.y);
 
     }
 }
