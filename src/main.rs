@@ -7,7 +7,7 @@ const PLANE: f32 = 48.0;
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SIZE: f32 = 70.0;
 pub const OBJECT_SPEED: f32 = 300.0;
-pub const NUMBER_OF_ENEMIES: usize = 2;
+pub const NUMBER_OF_ENEMIES: usize = 1;
 
 fn main() {
     App::new()
@@ -15,10 +15,9 @@ fn main() {
     .add_startup_system(spawn_player)
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
-    // .add_startup_system(spawn_object)
     .add_startup_system(spawn_enemy)
     .add_system(player_movement)
-    // .add_system(object_movement)
+    .add_system(enemy_movement)
     .add_system(confine_player_movement)
 
     .run();    
@@ -29,6 +28,11 @@ pub struct Player{}
 
 #[derive(Component)]
 pub struct Enemy{}
+
+#[derive(Component)]
+pub struct Velocity{
+    pub speed: Vec3,
+}
 
 pub fn spawn_player(
     mut commands: Commands,
@@ -75,10 +79,46 @@ pub fn spawn_enemy(
                     ..default()
                 },
                 Enemy{},
+                Velocity{
+                    speed: Vec3::new(1.0, 0.0, 0.0)
+                },
             )
         );
     }
 }
+
+pub fn enemy_movement(
+    window_query: Query<&Window, With<PrimaryWindow>>,
+    mut object_query: Query<(&mut Velocity, &mut Transform),  With<Enemy>>,
+    time: Res<Time>,
+){
+    let (mut velocity, mut transform) = object_query.single_mut();
+    let mut direction = Vec3::ZERO;
+    let window: &Window = window_query.get_single().unwrap(); 
+
+    let x_min = 0.0;
+    let x_max = window.width();
+    direction += velocity.speed;
+
+    if direction.length() > 0.0{
+        direction = direction.normalize();
+    }
+    transform.translation += direction * OBJECT_SPEED * time.delta_seconds();
+
+    let mut translation = transform.translation;
+    if translation.x < x_min {
+        translation.x = x_min;
+        velocity.speed.x *= -1.0;
+    }
+    else if translation.x > x_max {
+        translation.x = x_max;
+        velocity.speed.x *= -1.0;
+    }
+
+    transform.translation = translation;
+
+}
+
 
 
 pub fn player_movement(
@@ -175,79 +215,3 @@ pub fn confine_player_movement(
         player_transform.translation = translation;
     }
 }
-
-
-#[derive(Component)]
-pub struct Object{
-    pub name: String,
-    pub velocity: f64,
-}
-
-pub fn spawn_object(
-    mut commands: Commands,
-    window_query: Query<&Window, With<PrimaryWindow>>,
-    assert_server: Res<AssetServer>,
-){
-    let window: &Window = window_query.get_single().unwrap();
-    commands.spawn(
-        (
-            SpriteBundle{
-                transform: Transform{
-                    translation: Vec3::new(window.width() / 2.0, window.height() / 1.05, 0.0),
-                    scale: Vec3::new(3.0, 3.0, 0.0),
-                    ..default()
-                },
-                    texture: assert_server.load("sprites/Characters/character_0008.png"),
-                    ..default()
-            },
-            Object{
-                name: "kimsuhanmu".to_string(),
-                velocity: 3.0,
-            },
-        )
-    );
-}
-
-// pub fn object_movement(
-//     window_query: Query<&Window, With<PrimaryWindow>>,
-//     mut object_query: Query<(&mut Velocity, &mut Transform),  With<Object>>,
-//     time: Res<Time>,
-// ){
-//     let (mut velocity, mut transform) = object_query.single_mut();
-//     let mut direction = Vec3::ZERO;
-//     let window: &Window = window_query.get_single().unwrap(); 
-
-//     // if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A){
-//     //     direction += Vec3::new(-1.0, 0.0, 0.0);
-//     // }
-//     // if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D){
-//     //     direction += Vec3::new(1.0, 0.0, 0.0);
-//     // }
-//     // if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W){
-//     //     direction += Vec3::new(0.0, 1.0, 0.0);
-//     // }
-//     // if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S){
-//     //     direction += Vec3::new(0.0, -1.0, 0.0);
-//     // }
-//     let x_min = 0.0;
-//     let x_max = window.width();
-//     direction += velocity.speed;
-
-//     if direction.length() > 0.0{
-//         direction = direction.normalize();
-//     }
-//     transform.translation += direction * OBJECT_SPEED * time.delta_seconds();
-
-//     let mut translation = transform.translation;
-//     if translation.x < x_min {
-//         translation.x = x_min;
-//         velocity.speed.x *= -1.0;
-//     }
-//     else if translation.x > x_max {
-//         translation.x = x_max;
-//         velocity.speed.x *= -1.0;
-//     }
-
-//     transform.translation = translation;
-    
-// }
