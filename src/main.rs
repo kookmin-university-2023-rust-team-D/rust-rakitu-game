@@ -1,7 +1,9 @@
 use bevy::{prelude::*, render::view::window, window::PrimaryWindow};
 
-const PLANE_X: f32 = 80.0;
+const PLANE_X: f32 = 200.0;
 const PLANE_SIZE: Vec3 = Vec3::new(PLANE_X, 3.0, 0.0);
+pub const PLAYER_SPEED: f32 = 500.0;
+pub const PLAYER_SIZE: f32 = 64.0;
 
 fn main() {
     App::new()
@@ -10,9 +12,10 @@ fn main() {
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
     .add_system(player_movement)
+    .add_system(confine_player_movement)
+
     .run();    
 }
-
 #[derive(Component)]
 pub struct Player{}
 
@@ -34,7 +37,6 @@ pub fn spawn_player(
     );
 }
 
-pub const PLAYER_SPEED: f32 = 500.0;
 
 pub fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
@@ -74,7 +76,7 @@ pub fn spawn_plane(
         (
             SpriteBundle{
                 transform: Transform{
-                    translation: Vec3::new(window.height() / 2.0 , window.height() / 4.0, 0.0),
+                    translation: Vec3::new(window.height() / 2.0 , 23.0, 0.0),
                     scale: PLANE_SIZE,
                     ..default()
                 } ,// z component doesn't matter in 2D game
@@ -93,8 +95,41 @@ pub fn spawn_camera(
     let window = window_query.get_single().unwrap();
     commands.spawn(
         Camera2dBundle{
-            transform: Transform::from_xyz(window.height() / 2.0, window.height() / 2.0, 0.0),
+            transform: Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
             ..default()
         }
     );
+}
+
+pub fn confine_player_movement(
+    mut player_query: Query<&mut Transform,  With<Player>>,
+    window_query: Query<&Window, With<PrimaryWindow>>,// With is used for using Player struct,
+
+){
+    if let Ok(mut player_transform) = player_query.get_single_mut(){
+        let window = window_query.get_single().unwrap();
+        let half_player_size = PLAYER_SIZE / 2.0;
+
+        let x_min = 0.0 + half_player_size;
+        let x_max = window.width() -  half_player_size;
+        let y_min = 0.0 + half_player_size;
+        let y_max = window.height() - half_player_size;
+        let mut translation = player_transform.translation;
+
+        if translation.x < x_min{
+            translation.x = x_min;
+        } else if translation.x > x_max{
+            translation.x = x_max;
+        }
+        
+        if translation.y < y_min{
+            translation.y = y_min;
+        } else if translation.y > y_max{
+            translation.y = y_max;
+        }
+        player_transform.translation = translation;
+        // println!("{} {}", window.width(), window.height());
+        // println!("{}, {} ", translation.x, translation.y);
+
+    }
 }
