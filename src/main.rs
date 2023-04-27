@@ -6,8 +6,8 @@ const PLANE_SIZE: Vec3 = Vec3::new(PLANE_X, 3.0, 0.0);
 const PLANE: f32 = 48.0;
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SIZE: f32 = 70.0;
-pub const OBJECT_SPEED: f32 = 300.0;
-pub const NUMBER_OF_ENEMIES: usize = 1;
+pub const ENEMY_SPEED: f32 = 300.0;
+pub const NUMBER_OF_ENEMIES: usize = 4;
 
 fn main() {
     App::new()
@@ -19,7 +19,6 @@ fn main() {
     .add_system(player_movement)
     .add_system(enemy_movement)
     .add_system(confine_player_movement)
-
     .run();    
 }
 #[derive(Component)]
@@ -42,15 +41,9 @@ pub fn spawn_player(
     let window: &Window = window_query.get_single().unwrap();
     commands.spawn(
         (
-            // SpriteBundle{
-            //     transform: Transform::from_xyz(window.width() / 3.0, window.height() / 3.0, 0.0), // z component doesn't matter in 2D game
-            //     texture: assert_server.load("sprites/Characters/character_0004.png"),
-            //     ..default()
-            // },
             SpriteBundle{
                 transform: Transform{
                     translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
-                    scale: Vec3::new(3.0, 3.0, 0.0),
                     ..default()
                 },
                     texture: assert_server.load("sprites/mario_re.png"),
@@ -69,7 +62,6 @@ pub fn spawn_enemy(
     let window: &Window = window_query.get_single().unwrap();
     for _ in 0..NUMBER_OF_ENEMIES{
         let random_x = random::<f32>() * window.width();
-        let random_y = random::<f32>() * window.height();
         
         commands.spawn(
             (
@@ -89,33 +81,36 @@ pub fn spawn_enemy(
 
 pub fn enemy_movement(
     window_query: Query<&Window, With<PrimaryWindow>>,
-    mut object_query: Query<(&mut Velocity, &mut Transform),  With<Enemy>>,
+    mut enemy_query: Query<(&mut Velocity, &mut Transform),  With<Enemy>>,
     time: Res<Time>,
 ){
-    let (mut velocity, mut transform) = object_query.single_mut();
-    let mut direction = Vec3::ZERO;
-    let window: &Window = window_query.get_single().unwrap(); 
+    for (mut velocity, mut transform) in enemy_query.iter_mut(){
+        let mut direction = Vec3::ZERO;
+        let window: &Window = window_query.get_single().unwrap(); 
 
-    let x_min = 0.0;
-    let x_max = window.width();
-    direction += velocity.speed;
+        let x_min = 15.0;
+        let x_max = window.width() - 15.0;
+        direction += velocity.speed;
 
-    if direction.length() > 0.0{
-        direction = direction.normalize();
+        if direction.length() > 0.0{
+            direction = direction.normalize();
+        }
+        transform.translation += direction * ENEMY_SPEED * time.delta_seconds();
+
+        let mut translation = transform.translation;
+        if translation.x < x_min {
+            translation.x = x_min;
+            velocity.speed.x *= -1.0;
+        }
+        else if translation.x > x_max {
+            translation.x = x_max;
+            velocity.speed.x *= -1.0;
+        }
+
+        transform.translation = translation;
     }
-    transform.translation += direction * OBJECT_SPEED * time.delta_seconds();
-
-    let mut translation = transform.translation;
-    if translation.x < x_min {
-        translation.x = x_min;
-        velocity.speed.x *= -1.0;
-    }
-    else if translation.x > x_max {
-        translation.x = x_max;
-        velocity.speed.x *= -1.0;
-    }
-
-    transform.translation = translation;
+    // let (mut velocity, mut transform) = enemy_query.single_mut();
+    
 
 }
 
@@ -137,12 +132,6 @@ pub fn player_movement(
             direction += Vec3::new(1.0, 0.0, 0.0);
             transform.scale = Vec3::new(1.0, 1.0, 0.0);
         }
-        // if keyboard_input.pressed(KeyCode::Up) || keyboard_input.pressed(KeyCode::W){
-        //     direction += Vec3::new(0.0, 1.0, 0.0);
-        // }
-        // if keyboard_input.pressed(KeyCode::Down) || keyboard_input.pressed(KeyCode::S){
-        //     direction += Vec3::new(0.0, -1.0, 0.0);
-        // }
 
         if direction.length() > 0.0{
             direction = direction.normalize();
