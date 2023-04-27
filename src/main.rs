@@ -5,6 +5,7 @@ const PLANE_SIZE: Vec3 = Vec3::new(PLANE_X, 3.0, 0.0);
 const PLANE: f32 = 48.0;
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SIZE: f32 = 70.0;
+pub const OBJECT_SPEED: f32 = 300.0;
 
 fn main() {
     App::new()
