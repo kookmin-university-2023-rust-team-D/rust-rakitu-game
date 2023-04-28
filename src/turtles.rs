@@ -7,7 +7,7 @@ pub struct TurtlePlugin;
 impl Plugin for TurtlePlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_startup_system(spawn_enemies_over_time)
+            .add_system(spawn_enemies_over_time)
             .add_system(turtle_movement);
     }
 }
