@@ -325,7 +325,6 @@ pub fn turtle_movement(
         transform.translation = translation;
     }
     // let (mut velocity, mut transform) = enemy_query.single_mut();
-    
 
 }
 
