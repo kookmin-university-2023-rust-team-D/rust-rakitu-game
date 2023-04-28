@@ -7,7 +7,9 @@ pub mod turtles;
 // use bevy::prelude::{Component, Vec3};
 
 #[derive(Component)]
-pub struct Player{}
+pub struct Player{
+    pub hp: i32,
+}
 
 #[derive(Component)]
 pub struct Enemy{
@@ -63,6 +65,7 @@ pub const PLANE_SIZE: Vec3 = Vec3::new(PLANE_X, 3.0, 0.0);
 pub const PLANE: f32 = 48.0;
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SIZE: f32 = 70.0;
+pub const TURTLE_SIZE: f32 = 60.0;
 pub const ENEMY_SPEED: f32 = 300.0;
 pub const NUMBER_OF_ENEMIES: usize = 4;
 pub const TURTLE_SPAWN_TIME: f32 = 2.0;
