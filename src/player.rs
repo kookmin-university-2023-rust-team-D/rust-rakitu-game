@@ -31,7 +31,7 @@ pub fn spawn_player(
                     translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/mario_re.png"),
+                    texture: assert_server.load("sprites/mario_running.png"),
                     ..default()
             },
             Player{},

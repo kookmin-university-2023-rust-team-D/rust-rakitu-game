@@ -31,7 +31,7 @@ pub fn spawn_enemy(
             (
                 SpriteBundle{
                     transform: Transform::from_xyz(random_x, window.height() - 100.0, 0.0),
-                    texture: assert_server.load("sprites/lakitu2.png"),
+                    texture: assert_server.load("sprites/lakitu.png"),
                     ..default()
                 },
                 Enemy{},
