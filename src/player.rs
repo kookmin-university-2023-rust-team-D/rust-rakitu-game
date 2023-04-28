@@ -3,7 +3,7 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use crate::{PLAYER_SIZE, PLANE, PLAYER_SPEED, Player};
 
 //플레이어 플러그인 생성
-pub struct PlayerPlugin;
+pub struct PlayerPlugin; 
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
@@ -11,6 +11,7 @@ impl Plugin for PlayerPlugin {
             .add_startup_system(spawn_player)
             .add_system(player_movement)
             .add_system(confine_player_movement);
+            
     }
 }
 
