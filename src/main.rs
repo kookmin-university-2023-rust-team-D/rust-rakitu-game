@@ -8,10 +8,7 @@ pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SIZE: f32 = 70.0;
 pub const ENEMY_SPEED: f32 = 300.0;
 pub const NUMBER_OF_ENEMIES: usize = 4;
-<<<<<<< HEAD
 pub const ENEMY_SPAWN_TIME: f32 = 2.0;
-=======
->>>>>>> c9e34f0f1feaf4ac69340acbaf72fbdf997f2a8e
 
 fn main() {
     App::new()
@@ -23,12 +20,10 @@ fn main() {
     .add_startup_system(spawn_enemy)
     .add_system(player_movement)
     .add_system(enemy_movement)
-<<<<<<< HEAD
     .add_system(tick_enemy_spawn_timer)
     .add_system(spawn_enemies_over_time)
     .add_system(turtle_movement)
-=======
->>>>>>> c9e34f0f1feaf4ac69340acbaf72fbdf997f2a8e
+
     .add_system(confine_player_movement)
     .run();    
 }
@@ -44,10 +39,6 @@ pub struct Velocity{
     pub speed: Vec3,
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> c9e34f0f1feaf4ac69340acbaf72fbdf997f2a8e
 pub fn spawn_player(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
@@ -139,53 +130,6 @@ pub fn enemy_movement(
 }
 
 
-
-pub fn enemy_movement(
-    window_query: Query<&Window, With<PrimaryWindow>>,
-    mut enemy_query: Query<(&mut Velocity, &mut Transform),  With<Enemy>>,
-    time: Res<Time>,
-){
-    for (mut velocity, mut transform) in enemy_query.iter_mut(){
-        let mut direction = Vec3::ZERO;
-        let window: &Window = window_query.get_single().unwrap(); 
-
-        let x_min = 15.0;
-        let x_max = window.width() - 15.0;
-        direction += velocity.speed;
-        
-        let mut rng = rand::thread_rng();
-        let rand_num = rng.gen_range(0..=250);
-        if rand_num == 1{
-            velocity.speed.x *= -1.0;
-            transform.scale.x *= -1.0;
-        }
-
-        if direction.length() > 0.0{
-            direction = direction.normalize();
-        }
-        transform.translation += direction * ENEMY_SPEED * time.delta_seconds();
-
-        let mut translation = transform.translation;
-        if translation.x < x_min {
-            translation.x = x_min;
-            velocity.speed.x *= -1.0;
-            transform.scale.x *= -1.0;
-        }
-        else if translation.x > x_max {
-            translation.x = x_max;
-            velocity.speed.x *= -1.0;
-            transform.scale.x *= -1.0;
-        }
-
-        transform.translation = translation;
-    }
-    // let (mut velocity, mut transform) = enemy_query.single_mut();
-    
-
-}
-
-
-
 pub fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
     mut player_query: Query<&mut Transform,With<Player>>,
@@ -274,7 +218,6 @@ pub fn confine_player_movement(
         player_transform.translation = translation;
     }
 }
-<<<<<<< HEAD
 
 
 #[derive(Resource)]
@@ -358,5 +301,4 @@ pub fn turtle_movement(
     
 
 }
-=======
->>>>>>> c9e34f0f1feaf4ac69340acbaf72fbdf997f2a8e
+
