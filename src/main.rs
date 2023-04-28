@@ -1,157 +1,20 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use rand::prelude::*;
+use rust_rakitu_game::{player::PlayerPlugin, enemy::EnemyPlugin, Enemy, Velocity, PLANE_SIZE, ENEMY_SPEED};
 
-const PLANE_X: f32 = 200.0;
-const PLANE_SIZE: Vec3 = Vec3::new(PLANE_X, 3.0, 0.0);
-const PLANE: f32 = 48.0;
-pub const PLAYER_SPEED: f32 = 500.0;
-pub const PLAYER_SIZE: f32 = 70.0;
-pub const ENEMY_SPEED: f32 = 300.0;
-pub const NUMBER_OF_ENEMIES: usize = 4;
 pub const ENEMY_SPAWN_TIME: f32 = 2.0;
 
 fn main() {
     App::new()
     .add_plugins(DefaultPlugins)
+    .add_plugin(PlayerPlugin)
+    .add_plugin(EnemyPlugin)
     .init_resource::<EnemySpawnTimer>() // 기본적인 설정을 해줍니다. 이것만 있으면 검은색 공간이 appear
-    .add_startup_system(spawn_player)
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
-    .add_startup_system(spawn_enemy)
-    .add_system(player_movement)
-    .add_system(enemy_movement)
     .add_system(tick_enemy_spawn_timer)
     .add_system(spawn_enemies_over_time)
     .add_system(turtle_movement)
-
-    .add_system(confine_player_movement)
     .run();    
-}
-#[derive(Component)]
-pub struct Player{}
-
-
-#[derive(Component)]
-pub struct Enemy{}
-
-#[derive(Component)]
-pub struct Velocity{
-    pub speed: Vec3,
-}
-
-pub fn spawn_player(
-    mut commands: Commands,
-    window_query: Query<&Window, With<PrimaryWindow>>,
-    assert_server: Res<AssetServer>,
-){
-    let window: &Window = window_query.get_single().unwrap();
-    commands.spawn(
-        (
-            SpriteBundle{
-                transform: Transform{
-                    translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
-                    ..default()
-                },
-                    texture: assert_server.load("sprites/mario_re.png"),
-                    ..default()
-            },
-            Player{},
-        )
-    );
-}
-
-pub fn spawn_enemy(
-    mut commands: Commands,
-    window_query: Query<&Window, With<PrimaryWindow>>,
-    assert_server: Res<AssetServer>,
-){
-    let window: &Window = window_query.get_single().unwrap();
-    for _ in 0..NUMBER_OF_ENEMIES{
-        let random_x = random::<f32>() * window.width();
-        
-        commands.spawn(
-            (
-                SpriteBundle{
-                    transform: Transform::from_xyz(random_x, window.height() - 100.0, 0.0),
-                    texture: assert_server.load("sprites/lakitu2.png"),
-                    ..default()
-                },
-                Enemy{},
-                Velocity{
-                    speed: Vec3::new(1.0, 0.0, 0.0)
-                },
-            )
-        );
-    }
-}
-
-pub fn enemy_movement(
-    window_query: Query<&Window, With<PrimaryWindow>>,
-    mut enemy_query: Query<(&mut Velocity, &mut Transform),  With<Enemy>>,
-    time: Res<Time>,
-){
-    for (mut velocity, mut transform) in enemy_query.iter_mut(){
-        let mut direction = Vec3::ZERO;
-        let window: &Window = window_query.get_single().unwrap(); 
-
-        let x_min = 15.0;
-        let x_max = window.width() - 15.0;
-        direction += velocity.speed;
-        
-        let mut rng = rand::thread_rng();
-        let rand_num = rng.gen_range(0..=250);
-        if rand_num == 1{
-            velocity.speed.x *= -1.0;
-            transform.scale.x *= -1.0;
-        }
-
-        if direction.length() > 0.0{
-            direction = direction.normalize();
-        }
-        transform.translation += direction * ENEMY_SPEED * time.delta_seconds();
-
-        let mut translation = transform.translation;
-        if translation.x < x_min {
-            translation.x = x_min;
-            velocity.speed.x *= -1.0;
-            transform.scale.x *= -1.0;
-        }
-        else if translation.x > x_max {
-            translation.x = x_max;
-            velocity.speed.x *= -1.0;
-            transform.scale.x *= -1.0;
-        }
-
-        transform.translation = translation;
-    }
-    // let (mut velocity, mut transform) = enemy_query.single_mut();
-    
-
-}
-
-
-pub fn player_movement(
-    keyboard_input: Res<Input<KeyCode>>,
-    mut player_query: Query<&mut Transform,With<Player>>,
-    time: Res<Time>,
-){
-    if let Ok(mut transform) = player_query.get_single_mut(){
-        let mut direction = Vec3::ZERO;
-
-        if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A){
-            direction += Vec3::new(-1.0, 0.0, 0.0);
-            transform.scale = Vec3::new(-1.0, 1.0, 0.0);
-        }
-        if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D){
-            direction += Vec3::new(1.0, 0.0, 0.0);
-            transform.scale = Vec3::new(1.0, 1.0, 0.0);
-        }
-
-        if direction.length() > 0.0{
-            direction = direction.normalize();
-        }
-        transform.translation += direction * PLAYER_SPEED * time.delta_seconds();
-    }
 }
 
 pub fn spawn_plane(
@@ -189,35 +52,6 @@ pub fn spawn_camera(
     );
 }
 
-pub fn confine_player_movement(
-    mut player_query: Query<&mut Transform,  With<Player>>,
-    window_query: Query<&Window, With<PrimaryWindow>>,// With is used for using Player struct,
-
-){
-    if let Ok(mut player_transform) = player_query.get_single_mut(){
-        let window = window_query.get_single().unwrap();
-        let half_player_size = PLAYER_SIZE / 2.0;
-
-        let x_min = 0.0 + half_player_size;
-        let x_max = window.width() -  half_player_size;
-        let y_min = 0.0 + half_player_size + PLANE;
-        let y_max = window.height() - half_player_size;
-        let mut translation = player_transform.translation;
-
-        if translation.x < x_min{
-            translation.x = x_min;
-        } else if translation.x > x_max{
-            translation.x = x_max;
-        }
-        
-        if translation.y < y_min{
-            translation.y = y_min;
-        } else if translation.y > y_max{
-            translation.y = y_max;
-        }
-        player_transform.translation = translation;
-    }
-}
 
 
 #[derive(Resource)]
