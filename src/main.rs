@@ -1,5 +1,5 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use rust_rakitu_game::{player::PlayerPlugin, enemy::EnemyPlugin, PLANE_SIZE, EnemySpawnTimer, turtles::TurtlePlugin};
+use rust_rakitu_game::{player::PlayerPlugin, enemy::EnemyPlugin, PLANE_SIZE, TurtleSpawnTimer, turtles::TurtlePlugin};
 
 
 fn main() {
@@ -8,10 +8,10 @@ fn main() {
     .add_plugin(PlayerPlugin)
     .add_plugin(EnemyPlugin)
     .add_plugin(TurtlePlugin)
-    .init_resource::<EnemySpawnTimer>() // 기본적인 설정을 해줍니다. 이것만 있으면 검은색 공간이 appear
+    .init_resource::<TurtleSpawnTimer>() // 기본적인 설정을 해줍니다. 이것만 있으면 검은색 공간이 appear
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
-    .add_system(tick_enemy_spawn_timer)
+    .add_system(tick_turtle_spawn_timer)
     .run();    
 }
 
@@ -50,6 +50,6 @@ pub fn spawn_camera(
     );
 }
 
-pub fn tick_enemy_spawn_timer(mut enemy_spawn_timer: ResMut<EnemySpawnTimer>, time: Res<Time>) {
+pub fn tick_turtle_spawn_timer(mut enemy_spawn_timer: ResMut<TurtleSpawnTimer>, time: Res<Time>) {
     enemy_spawn_timer.timer.tick(time.delta());
 }

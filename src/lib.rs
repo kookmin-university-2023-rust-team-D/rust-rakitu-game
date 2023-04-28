@@ -21,13 +21,13 @@ pub struct Turtle{
 }
 
 #[derive(Resource)]
-pub struct EnemySpawnTimer {
+pub struct TurtleSpawnTimer {
     pub timer: Timer,
 }
 
-impl Default for EnemySpawnTimer {
-    fn default() -> EnemySpawnTimer {
-        EnemySpawnTimer {
+impl Default for TurtleSpawnTimer {
+    fn default() -> TurtleSpawnTimer {
+        TurtleSpawnTimer {
             timer: Timer::from_seconds(ENEMY_SPAWN_TIME, TimerMode::Repeating),
         }
     }
