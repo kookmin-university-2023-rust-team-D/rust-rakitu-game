@@ -91,6 +91,13 @@ pub fn enemy_movement(
         let x_min = 15.0;
         let x_max = window.width() - 15.0;
         direction += velocity.speed;
+        
+        let mut rng = rand::thread_rng();
+        let rand_num = rng.gen_range(0..=250);
+        if rand_num == 1{
+            velocity.speed.x *= -1.0;
+            transform.scale.x *= -1.0;
+        }
 
         if direction.length() > 0.0{
             direction = direction.normalize();
@@ -101,10 +108,12 @@ pub fn enemy_movement(
         if translation.x < x_min {
             translation.x = x_min;
             velocity.speed.x *= -1.0;
+            transform.scale.x *= -1.0;
         }
         else if translation.x > x_max {
             translation.x = x_max;
             velocity.speed.x *= -1.0;
+            transform.scale.x *= -1.0;
         }
 
         transform.translation = translation;
