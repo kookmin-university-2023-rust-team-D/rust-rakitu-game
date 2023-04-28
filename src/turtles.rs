@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{EnemySpawnTimer, Enemy, Turtle, Velocity, ENEMY_SPEED};
+use crate::{TurtleSpawnTimer, Enemy, Turtle, Velocity, ENEMY_SPEED};
 
 pub struct TurtlePlugin;
 
@@ -16,10 +16,10 @@ pub fn spawn_enemies_over_time(
     mut commands: Commands,
     //window_query: Query<&Window, With<PrimaryWindow>>,
     asset_server: Res<AssetServer>,
-    enemy_spawn_timer: Res<EnemySpawnTimer>,
+    enemy_spawn_timer: Res<TurtleSpawnTimer>,
     mut enemy_query: Query<&mut Transform,  With<Enemy>>,
 ) {
-    if enemy_spawn_timer.timer.finished() {
+    if enemy_spawn_timer.spawn_timer.finished() {
         //let window = window_query.get_single().unwrap();
         for transform in enemy_query.iter_mut(){
             let turtle_x = transform.translation.x;
@@ -28,7 +28,7 @@ pub fn spawn_enemies_over_time(
             commands.spawn((
                 SpriteBundle {
                     transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
-                    texture: asset_server.load("sprites/lakitu2.png"),
+                    texture: asset_server.load("sprites/turtle.png"),
                     ..default()
                 },
                 Turtle{
