@@ -1,8 +1,9 @@
+use bevy::prelude::{Component, Vec3};
+// enemy, player 모듈화
 pub mod enemy;
 pub mod player;
 
-use bevy::prelude::{Component, Vec3};
-
+// 쓰일 컴포넌트들
 #[derive(Component)]
 pub struct Player{}
 
@@ -14,6 +15,7 @@ pub struct Velocity{
     pub speed: Vec3,
 }
 
+//사용된 전역 변수들
 pub const PLANE_X: f32 = 200.0;
 pub const PLANE_SIZE: Vec3 = Vec3::new(PLANE_X, 3.0, 0.0);
 pub const PLANE: f32 = 48.0;

@@ -57,6 +57,7 @@ pub fn enemy_movement(
         let x_max = window.width() - 15.0;
         direction += velocity.speed;
         
+        //랜덤 속도 설정
         let mut rng = rand::thread_rng();
         let rand_num = rng.gen_range(0..=250);
         if rand_num == 1{
@@ -67,8 +68,10 @@ pub fn enemy_movement(
         if direction.length() > 0.0{
             direction = direction.normalize();
         }
+        // 랜덤으로 생성된 속도 적용
         transform.translation += direction * ENEMY_SPEED * time.delta_seconds();
-
+        
+        // 벽에 닿았을시, 밖으로 나갈 수 없에 설정
         let mut translation = transform.translation;
         if translation.x < x_min {
             translation.x = x_min;
@@ -81,6 +84,7 @@ pub fn enemy_movement(
             transform.scale.x *= -1.0;
         }
 
+        //최종 transform 설정
         transform.translation = translation;
     }
     // let (mut velocity, mut transform) = enemy_query.single_mut();
