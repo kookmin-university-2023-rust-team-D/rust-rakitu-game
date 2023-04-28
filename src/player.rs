@@ -34,7 +34,9 @@ pub fn spawn_player(
                     texture: assert_server.load("sprites/mario_running.png"),
                     ..default()
             },
-            Player{},
+            Player{
+                hp: 2
+            },
         )
     );
 }

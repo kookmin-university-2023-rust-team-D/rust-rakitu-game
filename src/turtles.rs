@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{EnemySpawnTimer, Enemy, Turtle, Velocity, ENEMY_SPEED};
+use crate::{Player, TurtleSpawnTimer, Enemy, Turtle, Velocity, ENEMY_SPEED, TURTLE_SIZE, PLAYER_SIZE};
 
 pub struct TurtlePlugin;
 
@@ -8,7 +8,8 @@ impl Plugin for TurtlePlugin {
     fn build(&self, app: &mut App) {
         app
             .add_system(spawn_enemies_over_time)
-            .add_system(turtle_movement);
+            .add_system(turtle_movement)
+            .add_system(turtle_hit_player);
     }
 }
 
@@ -16,10 +17,10 @@ pub fn spawn_enemies_over_time(
     mut commands: Commands,
     //window_query: Query<&Window, With<PrimaryWindow>>,
     asset_server: Res<AssetServer>,
-    enemy_spawn_timer: Res<EnemySpawnTimer>,
+    enemy_spawn_timer: Res<TurtleSpawnTimer>,
     mut enemy_query: Query<&mut Transform,  With<Enemy>>,
 ) {
-    if enemy_spawn_timer.timer.finished() {
+    if enemy_spawn_timer.spawn_timer.finished() {
         //let window = window_query.get_single().unwrap();
         for transform in enemy_query.iter_mut(){
             let turtle_x = transform.translation.x;
@@ -71,4 +72,40 @@ pub fn turtle_movement(
     // let (mut velocity, mut transform) = enemy_query.single_mut();
     
 
+}
+
+pub struct GameOver {
+    pub score: u32,
+}
+
+pub fn turtle_hit_player(
+    mut commands: Commands,
+    //mut game_over_event_writer: EventWriter<GameOver>,
+    mut player_query: Query<(Entity, &mut Player, &Transform), With<Player>>,
+    enemy_query: Query<(Entity, &Transform), With<Turtle>>,
+    //asset_server: Res<AssetServer>,
+    //audio: Res<Audio>,
+    //score: Res<Score>,
+) {
+    if let Ok((player_entity, mut player, player_transform)) = player_query.get_single_mut() {
+        for (turtle_entity, enemy_transform) in enemy_query.iter() {
+            let distance = player_transform
+                .translation
+                .distance(enemy_transform.translation);
+            let player_radius = PLAYER_SIZE / 2.0;
+            let enemy_radius = TURTLE_SIZE / 2.0;
+            if distance < player_radius + enemy_radius {
+                println!("Enemy hit player!");
+                //let sound_effect = asset_server.load("audio/explosionCrunch_000.ogg");
+                //audio.play(sound_effect);
+                commands.entity(turtle_entity).despawn();
+                player.hp -= 1;
+                if player.hp <= 0 {
+                    commands.entity(player_entity).despawn();
+                    println!("Enemy hit player! Game Over!");
+                }
+                //game_over_event_writer.send(GameOver { score: score.value });
+            }
+        }
+    }
 }
