@@ -1,16 +1,6 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 
-
-use crate::global::{PLAYER_SIZE, PLANE, PLAYER_SPEED};
-
-#[derive(Component)]
-pub struct Player{}
-
-#[derive(Component)]
-pub struct Velocity{
-    pub speed: Vec3,
-}
-
+use crate::{PLAYER_SIZE, PLANE, PLAYER_SPEED, Player};
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {

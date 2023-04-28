@@ -1,4 +1,18 @@
-use bevy::prelude::Vec3;
+pub mod enemy;
+pub mod player;
+
+use bevy::prelude::{Component, Vec3};
+
+#[derive(Component)]
+pub struct Player{}
+
+#[derive(Component)]
+pub struct Enemy{}
+
+#[derive(Component)]
+pub struct Velocity{
+    pub speed: Vec3,
+}
 
 pub const PLANE_X: f32 = 200.0;
 pub const PLANE_SIZE: Vec3 = Vec3::new(PLANE_X, 3.0, 0.0);
