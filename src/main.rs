@@ -29,7 +29,7 @@ pub fn spawn_plane(
                     scale: PLANE_SIZE,
                     ..default()
                 } ,// z component doesn't matter in 2D game
-                texture: assert_server.load("sprites/Tiles/tile_0002.png"),
+                texture: assert_server.load("sprites/tile_0002.png"),
                 ..default()
             },
         )
