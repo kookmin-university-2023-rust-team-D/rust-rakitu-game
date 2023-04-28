@@ -284,7 +284,7 @@ pub fn spawn_turtle_over_time(
             commands.spawn((
                 SpriteBundle {
                     transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
-                    texture: asset_server.load("sprites/lakitu2.png"),
+                    texture: asset_server.load("sprites/turtle.png"),
                     ..default()
                 },
                 Turtle{
