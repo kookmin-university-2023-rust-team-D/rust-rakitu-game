@@ -29,7 +29,7 @@ pub fn spawn_enemies_over_time(
             commands.spawn((
                 SpriteBundle {
                     transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
-                    texture: asset_server.load("sprites/turtle.png"),
+                    texture: asset_server.load("sprites/old_turtle.png"),
                     ..default()
                 },
                 Turtle{
