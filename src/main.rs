@@ -1,16 +1,21 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use rust_rakitu_game::{player::PlayerPlugin, enemy::EnemyPlugin, PLANE_SIZE,PLANE, PLAYER_SIZE, TurtleSpawnTimer, turtles::TurtlePlugin};
+use rust_rakitu_game::{ PLANE_SIZE,PLANE, PLAYER_SIZE};
 
 use bevy_matchbox::prelude::*;
-use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
+//use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
 use bevy_ggrs::*;
-// use matchbox_socket::{WebRtcSocket, PeerId};
+//use matchbox_socket::{WebRtcSocket, PeerId};
+use rand::prelude::*;
 
 const INPUT_UP: u8 = 1 << 0;
 const INPUT_DOWN: u8 = 1 << 1;
 const INPUT_LEFT: u8 = 1 << 2;
 const INPUT_RIGHT: u8 = 1 << 3;
-const INPUT_FIRE: u8 = 1 << 4;
+const INPUT_TURTLE: u8 = 1 << 4;
+
+pub const TURTLE_SIZE: f32 = 60.0;
+pub const NUMBER_OF_ENEMIES: usize = 4;
+pub const ENEMY_SPEED: f32 = 300.0;
 
 
 
@@ -21,20 +26,34 @@ fn main() {
     GGRSPlugin::<GgrsConfig>::new()
         .with_input_system(input)
         .register_rollback_component::<Transform>()
+        //.register_rollback_component::<Velocity>()
         .build(&mut app);
-    app
     
-
+    /*app.insert_resource(ClearColor(Color::WHITE))
+    .add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            title: "Final Project Team B".to_string(),
+            fit_canvas_to_parent: true,
+            prevent_default_event_handling: false,
+            ..default()
+        }),
+        ..default()
+    }))*/
+    app
     .add_plugins(DefaultPlugins)
-    .add_plugin(PlayerPlugin)
-    .add_plugin(EnemyPlugin)
-    .add_plugin(TurtlePlugin)
-    .init_resource::<TurtleSpawnTimer>() // 기본적인 설정을 해줍니다. 이것만 있으면 검은색 공간이 appear
-    // .add_startup_system(spawn_camera)
+    //.add_plugin(PlayerPlugin)
+    //.add_plugin(EnemyPlugin)
+    //.add_plugin(TurtlePlugin)
+    //.init_resource::<TurtleSpawnTimer>() // 기본적인 설정을 해줍니다. 이것만 있으면 검은색 공간이 appear
+    .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
-    .add_system(tick_turtle_spawn_timer)
+    //.add_system(tick_turtle_spawn_timer)
     .add_startup_systems((spawn_player, start_matchbox_socket))
-    .add_systems((player_movement.in_schedule(GGRSSchedule), wait_for_players))
+    //.add_startup_system(spawn_lakitu)
+    .add_systems((wait_for_players, player_movement.in_schedule(GGRSSchedule)))
+    //.add_system(lakitu_movement)
+    .add_system(turtle_movement)
+    .add_system(turtle_hit_player)
     .run();   
 }
 
@@ -55,11 +74,12 @@ fn input(_: In<ggrs::PlayerHandle>, keys: Res<Input<KeyCode>>) -> u8 {
         input |= INPUT_RIGHT;
     }
     if keys.any_pressed([KeyCode::Space, KeyCode::Return]) {
-        input |= INPUT_FIRE;
+        input |= INPUT_TURTLE;
     }
 
     input
 }
+
 pub struct GgrsConfig;
 
 impl ggrs::Config for GgrsConfig {
@@ -70,7 +90,7 @@ impl ggrs::Config for GgrsConfig {
 
 
 pub fn start_matchbox_socket(mut commands: Commands) {
-    let room_url = "ws://127.0.0.1:3536/extreme_bevy?next=2";
+    let room_url = "ws://127.0.0.1:3536/room";
     info!("connecting to matchbox server: {:?}", room_url);
     commands.insert_resource(MatchboxSocket::new_ggrs(room_url));
 }
@@ -149,76 +169,165 @@ pub fn spawn_camera(
     );
 }
 
-pub fn tick_turtle_spawn_timer(mut enemy_spawn_timer: ResMut<TurtleSpawnTimer>, time: Res<Time>) {
-    enemy_spawn_timer.spawn_timer.tick(time.delta());
-}
-
-
 pub const PLAYER_SPEED: f32 = 500.0;
 #[derive(Component)]
 pub struct Player{
+    pub is_enemy: bool,
     pub hp: i32,
     pub handle: usize
 }
 
-//플레이어 움직임 구현
-pub fn player_movement(
-    inputs: Res<PlayerInputs<GgrsConfig>>,
-    mut player_query: Query<&mut Transform,With<Player>>,
+#[derive(Component)]
+pub struct Turtle{
+}
+
+#[derive(Default, Reflect, Component)]
+pub struct Velocity{
+    pub speed: Vec3,
+}
+
+pub fn spawn_turtle(
+    mut commands: Commands,
+    //window_query: Query<&Window, With<PrimaryWindow>>,
+    asset_server: Res<AssetServer>,
+    mut enemy_query: Query<&mut Transform,  With<Player>>,
+){
+    for transform in enemy_query.iter_mut(){
+        let turtle_x = transform.translation.x;
+        let turtle_y = transform.translation.y;
+
+        commands.spawn((
+            SpriteBundle {
+                transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
+                texture: asset_server.load("sprites/turtle.png"),
+                ..default()
+            },
+            Turtle{
+            },
+            Velocity{
+                speed: Vec3::new(0.0, -1.0, 0.0),
+            },
+        ));
+    }
+}
+
+pub fn turtle_movement(
+    mut commands: Commands,
+    //window_query: Query<&Window, With<PrimaryWindow>>,
+    mut turtle_query: Query<(Entity, &mut Velocity, &mut Transform),  With<Turtle>>,
     time: Res<Time>,
 ){
+    for (turtle, velocity, mut transform) in turtle_query.iter_mut(){
+        let mut direction = Vec3::ZERO;
+        //let window: &Window = window_query.get_single().unwrap(); 
+
+        let y_min = 15.0;
+        
+        direction += velocity.speed;
+
+        if direction.length() > 0.0{
+            direction = direction.normalize();
+        }
+
+        transform.translation += direction * ENEMY_SPEED * time.delta_seconds();
+
+        let translation = transform.translation;
+        if translation.y < y_min {
+            commands.entity(turtle).despawn();
+        }
+
+        transform.translation = translation;
+    }
+    // let (mut velocity, mut transform) = enemy_query.single_mut();
     
-    let mut direction = Vec2::ZERO;
 
-    let (input, _) = inputs[0];
+}
 
-    if input & INPUT_UP != 0 {
-        direction.y += 1.;
+pub fn turtle_hit_player(
+    mut commands: Commands,
+    //mut game_over_event_writer: EventWriter<GameOver>,
+    mut player_query: Query<(Entity, &mut Player, &Transform), With<Player>>,
+    enemy_query: Query<(Entity, &Transform), With<Turtle>>,
+    //asset_server: Res<AssetServer>,
+    //audio: Res<Audio>,
+    //score: Res<Score>,
+) {
+    if let Ok((player_entity, mut player, player_transform)) = player_query.get_single_mut() {
+        for (turtle_entity, enemy_transform) in enemy_query.iter() {
+            let distance = player_transform
+                .translation
+                .distance(enemy_transform.translation);
+            let player_radius = PLAYER_SIZE / 2.0;
+            let enemy_radius = TURTLE_SIZE / 2.0;
+            if distance < player_radius + enemy_radius {
+                println!("Enemy hit player!");
+                //let sound_effect = asset_server.load("audio/explosionCrunch_000.ogg");
+                //audio.play(sound_effect);
+                commands.entity(turtle_entity).despawn();
+                player.hp -= 1;
+                if player.hp <= 0 {
+                    commands.entity(player_entity).despawn();
+                    println!("Enemy hit player! Game Over!");
+                }
+                //game_over_event_writer.send(GameOver { score: score.value });
+            }
+        }
     }
-    if input & INPUT_DOWN != 0 {
-        direction.y -= 1.;
-    }
-    if input & INPUT_RIGHT != 0 {
-        direction.x += 1.;
-    }
-    if input & INPUT_LEFT != 0 {
-        direction.x -= 1.;
-    }
-    if direction == Vec2::ZERO {
-        return;
-    }
+}
 
-    let move_speed = 0.13;
-    let move_delta = (direction * move_speed).extend(0.);
+//플레이어 움직임 구현
+pub fn player_movement(
+    mut commands: Commands,
+    assert_server: Res<AssetServer>,
+    inputs: Res<PlayerInputs<GgrsConfig>>,
+    mut player_query: Query<(&Player, &mut Transform), With<Rollback>>,
+    //time: Res<Time>,
+){
+    for (player, mut transform) in player_query.iter_mut(){ 
+        let mut direction = Vec2::ZERO;
 
-    for mut transform in player_query.iter_mut() {
-        transform.translation += move_delta;
-    // //키보드 인풋을 받아 플레이어를 움직이게 만든다.
-    // if let Ok(mut transform) = player_query.get_single_mut(){
-    //     let mut direction = Vec3::ZERO;
+        let (input, _) = inputs[player.handle];
 
-    //     if input & INPUT_RIGHT != 0 {
-    //         direction.x += 1.;
-    //     }
-    //     if input & INPUT_LEFT != 0 {
-    //         direction.x -= 1.;
-    //     }
-    //     if direction == Vec2::ZERO {
-    //         return;
-    //     }
-        // if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A){
-        //     direction += Vec3::new(-1.0, 0.0, 0.0);
-        //     transform.scale = Vec3::new(-1.0, 1.0, 0.0);
-        // }
-        // if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D){
-        //     direction += Vec3::new(1.0, 0.0, 0.0);
-        //     transform.scale = Vec3::new(1.0, 1.0, 0.0);
-        // }
+        if input & INPUT_UP != 0 {
+            direction.y += 1.;
+        }
+        if input & INPUT_DOWN != 0 {
+            direction.y -= 1.;
+        }
+        if input & INPUT_RIGHT != 0 {
+            direction.x += 1.;
+        }
+        if input & INPUT_LEFT != 0 {
+            direction.x -= 1.;
+        }
+        if input & INPUT_TURTLE != 0{
+            if player.is_enemy {
+                let turtle_x = transform.translation.x;
+                let turtle_y = transform.translation.y;
+        
+                commands.spawn((
+                    SpriteBundle {
+                        transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
+                        texture: assert_server.load("sprites/turtle.png"),
+                        ..default()
+                    },
+                    Turtle{
+                    },
+                    Velocity{
+                        speed: Vec3::new(0.0, -1.0, 0.0),
+                    },
+                ));
+            }
+        }
+        if direction == Vec2::ZERO {
+            continue;
+        }
 
-        // if direction.length() > 0.0{ 
-        //     direction = direction.normalize();
-        // }
-        // transform.translation += direction * PLAYER_SPEED * time.delta_seconds();
+        println!("player {:?} moved", player.handle); 
+        let move_speed = 30.0;
+        let move_delta = (direction * move_speed).extend(0.);
+
+        transform.translation += move_delta; 
     }
 }
 
@@ -235,6 +344,11 @@ pub fn spawn_player(
     //111111
     commands.spawn(
         (
+            Player{
+                is_enemy: false,
+                hp: 2,
+                handle: 0
+            },
             rip.next(),
             SpriteBundle{
                 transform: Transform{
@@ -244,10 +358,6 @@ pub fn spawn_player(
                     texture: assert_server.load("sprites/mario_running.png"),
                     ..default()
             },
-            Player{
-                hp: 2,
-                handle: 0
-            },
         )
     );
 
@@ -255,19 +365,21 @@ pub fn spawn_player(
     //222222222
     commands.spawn(
         (
+            Player{
+                is_enemy: true,
+                hp: 2,
+                handle: 1
+            },
             rip.next(),
             SpriteBundle{
                 transform: Transform{
-                    translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
+                    translation: Vec3::new(window.width() / 3.0, window.height() - 100.0, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/mario_stop.png"),
+                    texture: assert_server.load("sprites/lakitu.png"),
                     ..default()
-            },
-            Player{
-                hp: 2,
-                handle: 1
             },
         )
     );
 }
+
