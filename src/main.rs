@@ -2,9 +2,9 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use rust_rakitu_game::{player::PlayerPlugin, enemy::EnemyPlugin, PLANE_SIZE,PLANE, PLAYER_SIZE, TurtleSpawnTimer, turtles::TurtlePlugin};
 
 use bevy_matchbox::prelude::*;
-use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
+//use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
 use bevy_ggrs::*;
-// use matchbox_socket::{WebRtcSocket, PeerId};
+//use matchbox_socket::{WebRtcSocket, PeerId};
 
 const INPUT_UP: u8 = 1 << 0;
 const INPUT_DOWN: u8 = 1 << 1;
@@ -22,19 +22,28 @@ fn main() {
         .with_input_system(input)
         .register_rollback_component::<Transform>()
         .build(&mut app);
-    app
     
-
+    /*app.insert_resource(ClearColor(Color::WHITE))
+    .add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            title: "Final Project Team B".to_string(),
+            fit_canvas_to_parent: true,
+            prevent_default_event_handling: false,
+            ..default()
+        }),
+        ..default()
+    }))*/
+    app
     .add_plugins(DefaultPlugins)
-    .add_plugin(PlayerPlugin)
+    //.add_plugin(PlayerPlugin)
     .add_plugin(EnemyPlugin)
     .add_plugin(TurtlePlugin)
     .init_resource::<TurtleSpawnTimer>() // 기본적인 설정을 해줍니다. 이것만 있으면 검은색 공간이 appear
-    // .add_startup_system(spawn_camera)
+    .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
     .add_system(tick_turtle_spawn_timer)
     .add_startup_systems((spawn_player, start_matchbox_socket))
-    .add_systems((player_movement.in_schedule(GGRSSchedule), wait_for_players))
+    .add_systems((wait_for_players, player_movement.in_schedule(GGRSSchedule)))
     .run();   
 }
 
@@ -70,7 +79,7 @@ impl ggrs::Config for GgrsConfig {
 
 
 pub fn start_matchbox_socket(mut commands: Commands) {
-    let room_url = "ws://127.0.0.1:3536/extreme_bevy?next=2";
+    let room_url = "ws://127.0.0.1:3536/room";
     info!("connecting to matchbox server: {:?}", room_url);
     commands.insert_resource(MatchboxSocket::new_ggrs(room_url));
 }
@@ -164,35 +173,35 @@ pub struct Player{
 //플레이어 움직임 구현
 pub fn player_movement(
     inputs: Res<PlayerInputs<GgrsConfig>>,
-    mut player_query: Query<&mut Transform,With<Player>>,
-    time: Res<Time>,
+    mut player_query: Query<(&Player, &mut Transform),With<Player>>,
+    //time: Res<Time>,
 ){
-    
-    let mut direction = Vec2::ZERO;
+    for (player, mut transform) in player_query.iter_mut(){ 
+        let mut direction = Vec2::ZERO;
 
-    let (input, _) = inputs[0];
+        let (input, _) = inputs[player.handle];
 
-    if input & INPUT_UP != 0 {
-        direction.y += 1.;
-    }
-    if input & INPUT_DOWN != 0 {
-        direction.y -= 1.;
-    }
-    if input & INPUT_RIGHT != 0 {
-        direction.x += 1.;
-    }
-    if input & INPUT_LEFT != 0 {
-        direction.x -= 1.;
-    }
-    if direction == Vec2::ZERO {
-        return;
-    }
+        if input & INPUT_UP != 0 {
+            direction.y += 1.;
+        }
+        if input & INPUT_DOWN != 0 {
+            direction.y -= 1.;
+        }
+        if input & INPUT_RIGHT != 0 {
+            direction.x += 1.;
+        }
+        if input & INPUT_LEFT != 0 {
+            direction.x -= 1.;
+        }
+        if direction == Vec2::ZERO {
+            continue;
+        }
 
-    let move_speed = 0.13;
-    let move_delta = (direction * move_speed).extend(0.);
+        println!("player {:?} moved", player.handle); 
+        let move_speed = 30.0;
+        let move_delta = (direction * move_speed).extend(0.);
 
-    for mut transform in player_query.iter_mut() {
-        transform.translation += move_delta;
+        transform.translation += move_delta; 
     // //키보드 인풋을 받아 플레이어를 움직이게 만든다.
     // if let Ok(mut transform) = player_query.get_single_mut(){
     //     let mut direction = Vec3::ZERO;
@@ -235,6 +244,10 @@ pub fn spawn_player(
     //111111
     commands.spawn(
         (
+            Player{
+                hp: 2,
+                handle: 0
+            },
             rip.next(),
             SpriteBundle{
                 transform: Transform{
@@ -244,10 +257,6 @@ pub fn spawn_player(
                     texture: assert_server.load("sprites/mario_running.png"),
                     ..default()
             },
-            Player{
-                hp: 2,
-                handle: 0
-            },
         )
     );
 
@@ -255,6 +264,10 @@ pub fn spawn_player(
     //222222222
     commands.spawn(
         (
+            Player{
+                hp: 2,
+                handle: 1
+            },
             rip.next(),
             SpriteBundle{
                 transform: Transform{
@@ -264,10 +277,21 @@ pub fn spawn_player(
                     texture: assert_server.load("sprites/mario_stop.png"),
                     ..default()
             },
-            Player{
-                hp: 2,
-                handle: 1
-            },
         )
     );
 }
+
+/*pub fn spawn(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
+    commands.spawn(
+        (
+            Player { handle: 0 }, rip.next(), SpriteBundle {
+        transform: Transform::from_translation(Vec3::new(-2., 0., 100.)),
+        sprite: Sprite { color: Color::BLUE, ..default() },
+        ..default()
+    }));
+    commands.spawn((Player { handle: 1 }, rip.next(), SpriteBundle {
+        transform: Transform::from_translation(Vec3::new(2., 0., 100.)),
+        sprite: Sprite { color: Color::RED, ..default() },
+        ..default()
+    }));
+}*/
