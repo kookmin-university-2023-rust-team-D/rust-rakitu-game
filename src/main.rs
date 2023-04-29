@@ -189,9 +189,11 @@ pub fn player_movement(
         }
         if input & INPUT_RIGHT != 0 {
             direction.x += 1.;
+            transform.scale = Vec3::new(1.0, 1.0, 0.0);
         }
         if input & INPUT_LEFT != 0 {
             direction.x -= 1.;
+            transform.scale = Vec3::new(-1.0, 1.0, 0.0);
         }
         if direction == Vec2::ZERO {
             continue;
@@ -254,7 +256,7 @@ pub fn spawn_player(
                     translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/mario_running.png"),
+                    texture: assert_server.load("sprites/mario.png"),
                     ..default()
             },
         )
@@ -274,7 +276,7 @@ pub fn spawn_player(
                     translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/mario_stop.png"),
+                    texture: assert_server.load("sprites/luigi.png"),
                     ..default()
             },
         )
