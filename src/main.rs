@@ -1,11 +1,10 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use rust_rakitu_game::{ PLANE_SIZE,PLANE, PLAYER_SIZE};
+use rust_rakitu_game::{PLANE_SIZE, PLANE, PLAYER_SIZE};
 
 use bevy_matchbox::prelude::*;
 //use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
 use bevy_ggrs::*;
 //use matchbox_socket::{WebRtcSocket, PeerId};
-use rand::prelude::*;
 
 const INPUT_UP: u8 = 1 << 0;
 const INPUT_DOWN: u8 = 1 << 1;
@@ -16,7 +15,28 @@ const INPUT_TURTLE: u8 = 1 << 4;
 pub const TURTLE_SIZE: f32 = 60.0;
 pub const NUMBER_OF_ENEMIES: usize = 4;
 pub const ENEMY_SPEED: f32 = 300.0;
+pub const PLAYER_SPEED: f32 = 500.0;
+pub const TURTLE_SPAWN_TIME: f32 = 0.1;
+pub const FPS: usize = 60;
 
+
+// #[derive(Reflect, Resource)]
+// pub struct TurtleSpawnTimer {
+//     pub spawn_timer: Timer,
+// }
+// impl Default for TurtleSpawnTimer {
+//     fn default() -> TurtleSpawnTimer {
+//         TurtleSpawnTimer {
+//             spawn_timer: Timer::from_seconds(TURTLE_SPAWN_TIME, TimerMode::Repeating),
+//         }
+//     }
+// }
+
+#[derive(Resource, Default, Reflect, Hash)]
+#[reflect(Hash)]
+pub struct FrameCount {
+    pub frame: u32,
+}
 
 
 fn main() {
@@ -26,32 +46,21 @@ fn main() {
     GGRSPlugin::<GgrsConfig>::new()
         .with_input_system(input)
         .register_rollback_component::<Transform>()
-        //.register_rollback_component::<Velocity>()
+        //.register_rollback_resource::<TurtleSpawnTimer>()
+        .with_update_frequency(FPS)
+        .register_rollback_resource::<FrameCount>()
         .build(&mut app);
     
-    /*app.insert_resource(ClearColor(Color::WHITE))
-    .add_plugins(DefaultPlugins.set(WindowPlugin {
-        primary_window: Some(Window {
-            title: "Final Project Team B".to_string(),
-            fit_canvas_to_parent: true,
-            prevent_default_event_handling: false,
-            ..default()
-        }),
-        ..default()
-    }))*/
     app
     .add_plugins(DefaultPlugins)
-    //.add_plugin(PlayerPlugin)
-    //.add_plugin(EnemyPlugin)
-    //.add_plugin(TurtlePlugin)
-    //.init_resource::<TurtleSpawnTimer>() // 기본적인 설정을 해줍니다. 이것만 있으면 검은색 공간이 appear
+    //.add_system(increase_frame_system.in_schedule(GGRSSchedule))
+    //.init_resource::<TurtleSpawnTimer>()
+    .insert_resource(FrameCount { frame: 0 })
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
-    //.add_system(tick_turtle_spawn_timer)
     .add_startup_systems((spawn_player, start_matchbox_socket))
-    //.add_startup_system(spawn_lakitu)
     .add_systems((wait_for_players, player_movement.in_schedule(GGRSSchedule)))
-    //.add_system(lakitu_movement)
+    //.add_system(tick_turtle_spawn_timer)
     .add_system(turtle_movement)
     .add_system(turtle_hit_player)
     .run();   
@@ -169,7 +178,10 @@ pub fn spawn_camera(
     );
 }
 
-pub const PLAYER_SPEED: f32 = 500.0;
+// pub fn tick_turtle_spawn_timer(mut enemy_spawn_timer: ResMut<TurtleSpawnTimer>, time: Res<Time>) {
+//     enemy_spawn_timer.spawn_timer.tick(time.delta());
+// }
+
 #[derive(Component)]
 pub struct Player{
     pub is_enemy: bool,
@@ -246,20 +258,20 @@ pub fn turtle_movement(
 pub fn turtle_hit_player(
     mut commands: Commands,
     //mut game_over_event_writer: EventWriter<GameOver>,
-    mut player_query: Query<(Entity, &mut Player, &Transform), With<Player>>,
+    mut player_query: Query<(Entity, &mut Player, &Transform), With<Rollback>>,
     enemy_query: Query<(Entity, &Transform), With<Turtle>>,
     //asset_server: Res<AssetServer>,
     //audio: Res<Audio>,
     //score: Res<Score>,
 ) {
-    if let Ok((player_entity, mut player, player_transform)) = player_query.get_single_mut() {
+    for (player_entity, mut player, player_transform) in  player_query.iter_mut() {
         for (turtle_entity, enemy_transform) in enemy_query.iter() {
             let distance = player_transform
                 .translation
                 .distance(enemy_transform.translation);
             let player_radius = PLAYER_SIZE / 2.0;
             let enemy_radius = TURTLE_SIZE / 2.0;
-            if distance < player_radius + enemy_radius {
+            if distance < (player_radius + enemy_radius) && !(player.is_enemy) {
                 println!("Enemy hit player!");
                 //let sound_effect = asset_server.load("audio/explosionCrunch_000.ogg");
                 //audio.play(sound_effect);
@@ -281,8 +293,10 @@ pub fn player_movement(
     assert_server: Res<AssetServer>,
     inputs: Res<PlayerInputs<GgrsConfig>>,
     mut player_query: Query<(&Player, &mut Transform), With<Rollback>>,
+    mut frame_count: ResMut<FrameCount>,
     //time: Res<Time>,
 ){
+    frame_count.frame += 1;
     for (player, mut transform) in player_query.iter_mut(){ 
         let mut direction = Vec2::ZERO;
 
@@ -300,11 +314,11 @@ pub fn player_movement(
         if input & INPUT_LEFT != 0 {
             direction.x -= 1.;
         }
-        if input & INPUT_TURTLE != 0{
-            if player.is_enemy {
+        if input & INPUT_TURTLE != 0 && (frame_count.frame % 20 == 0){
+            if player.is_enemy{
                 let turtle_x = transform.translation.x;
                 let turtle_y = transform.translation.y;
-        
+                println!("turtle spawn");
                 commands.spawn((
                     SpriteBundle {
                         transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
