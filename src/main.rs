@@ -2,24 +2,13 @@ use bevy::{prelude::*, window::PrimaryWindow};
 use rust_rakitu_game::{PLANE_SIZE, PLANE, PLAYER_SIZE};
 use bevy::app::AppExit;
 use bevy_matchbox::prelude::*;
-//use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
 use bevy_ggrs::*;
-//use matchbox_socket::{WebRtcSocket, PeerId};
 
 mod main_menu;
 use main_menu::MainMenuPlugin;
- 
-mod game;
-use game::GamePlugin;
-
-use game::*;
 
 pub mod events;
 use events::*;
-
-
-// use crate::events::GameOver;
-// use crate::events::GameOver;
 
 const INPUT_UP: u8 = 1 << 0;
 const INPUT_DOWN: u8 = 1 << 1;
@@ -34,19 +23,6 @@ pub const ENEMY_SPEED: f32 = 300.0;
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const TURTLE_SPAWN_TIME: f32 = 0.1;
 pub const FPS: usize = 60;
-
-
-// #[derive(Reflect, Resource)]
-// pub struct TurtleSpawnTimer {
-//     pub spawn_timer: Timer,
-// }
-// impl Default for TurtleSpawnTimer {
-//     fn default() -> TurtleSpawnTimer {
-//         TurtleSpawnTimer {
-//             spawn_timer: Timer::from_seconds(TURTLE_SPAWN_TIME, TimerMode::Repeating),
-//         }
-//     }
-// }
 
 #[derive(Resource, Default, Reflect, Hash)]
 #[reflect(Hash)]
@@ -66,8 +42,15 @@ fn main() {
     // MainMenu (added)
     .add_plugin(MainMenuPlugin)
     // Beby Plugins 
-    .add_plugins(DefaultPlugins)
     .add_state::<AppState>()
+    .add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            title: "Final Project Team B".to_string(),
+            ..default()
+        }),
+        ..default()
+    }))
+    //.add_plugins(DefaultPlugins)
     .insert_resource(FrameCount { frame: 0 })
     // Startup Systems
     .add_startup_system(spawn_camera)
@@ -217,6 +200,9 @@ pub fn spawn_plane(
                 texture: assert_server.load("sprites/tile_0002.png"),
                 ..default()
             },
+            GameState{
+                is_game_over: false,
+            }
         )
     );
 }
@@ -254,11 +240,11 @@ pub struct Turtle{
 pub struct Velocity{
     pub speed: Vec3,
 }
-
+ 
 #[derive(Component)]
 pub struct GameState{
     pub is_game_over: bool,
-    pub score: i32,
+    // pub score: i32,
 }
 
 pub fn spawn_turtle(
@@ -290,7 +276,7 @@ pub fn turtle_movement(
     mut commands: Commands,
     //window_query: Query<&Window, With<PrimaryWindow>>,
     mut turtle_query: Query<(Entity, &mut Velocity, &mut Transform),  With<Turtle>>,
-    mut player_query: Query<&mut GameState, With<Player>>,
+    // mut player_query: Query<&mut GameState, With<Player>>,
     time: Res<Time>,
 ){
     for (turtle, velocity, mut transform) in turtle_query.iter_mut(){
@@ -309,9 +295,9 @@ pub fn turtle_movement(
 
         let translation = transform.translation;
         if translation.y < y_min {
-            for mut game_state in player_query.iter_mut(){
-                game_state.score += 1;
-            }
+            // for mut game_state in player_query.iter_mut(){
+            //     // game_state.score += 1;
+            // }
             commands.entity(turtle).despawn();
         }
 
@@ -371,13 +357,14 @@ pub fn high_scores_updated(high_scores: Res<HighScores>) {
 pub fn turtle_hit_player(
     mut commands: Commands,
     mut game_over_event_writer: EventWriter<GameOver>,
-    mut player_query: Query<(Entity, &mut Player, &Transform, &mut GameState), With<Rollback>>,
+    mut state_query: Query<&mut GameState>,
+    mut player_query: Query<(Entity, &mut Player, &Transform), With<Rollback>>,
     enemy_query: Query<(Entity, &Transform), With<Turtle>>,
     //asset_server: Res<AssetServer>,
     //audio: Res<Audio>,
-    mut score: ResMut<Score>,
+    score: ResMut<Score>,
 ) {
-    for (player_entity, mut player, player_transform, mut game_state) in  player_query.iter_mut() {
+    for (player_entity, mut player, player_transform) in  player_query.iter_mut() {
         for (turtle_entity, enemy_transform) in enemy_query.iter() {
             let distance = player_transform
                 .translation
@@ -392,7 +379,10 @@ pub fn turtle_hit_player(
                 player.hp -= 1;
                 // score.value += 1;
                 if player.hp <= 0 {
-                    game_state.is_game_over = true;
+                    for mut gamestate in state_query.iter_mut(){
+                        gamestate.is_game_over = true;
+                        println!("{}", gamestate.is_game_over)
+                    }
                     commands.entity(player_entity).despawn();
                     println!("Enemy hit player! Game Over!");
                     // println!("Score: {}", game_state.score);
@@ -430,9 +420,12 @@ pub fn player_movement(
         }
         if input & INPUT_RIGHT != 0 {
             direction.x += 1.;
-        }
+            transform.scale = Vec3::new(1.0, 1.0, 0.0);
+
+        } 
         if input & INPUT_LEFT != 0 {
             direction.x -= 1.;
+            transform.scale = Vec3::new(-1.0, 1.0, 0.0);
         }
         if input & INPUT_TURTLE != 0 && (frame_count.frame % 20 == 0){
             if player.is_enemy{
@@ -471,7 +464,7 @@ pub fn spawn_player(
     mut rip: ResMut<RollbackIdProvider>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     assert_server: Res<AssetServer>,
-    mut score: ResMut<Score>,
+    // mut score: ResMut<Score>,
 
 ){
     //window 객체 에서 윈도우 속성 뽑아오기
@@ -497,7 +490,7 @@ pub fn spawn_player(
             },
             GameState{
                 is_game_over: false,
-                score: 0
+                // score: 0
             }
         )
     );
@@ -522,7 +515,6 @@ pub fn spawn_player(
             },
             GameState{
                 is_game_over: false,
-                score: 0
             }
         )
     );
@@ -531,14 +523,17 @@ pub fn spawn_player(
 pub fn game_end_system(
     mut commands: Commands,
     focused_windows: Query<(Entity, &Window)>,
+    game_state: Query<&GameState, Without<Player>>,
     input: Res<Input<KeyCode>>,
 ){
     for (window, focus) in focused_windows.iter() {
         if !focus.focused { 
             continue;
         }
-        if input.just_pressed(KeyCode::Q) {
-            commands.entity(window).despawn();
-        } 
+        for state in game_state.iter(){
+            if state.is_game_over && input.just_pressed(KeyCode::Q) {
+                commands.entity(window).despawn();
+            }
+        }
     }
 }
