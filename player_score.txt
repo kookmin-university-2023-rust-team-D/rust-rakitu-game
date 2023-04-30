@@ -1,4 +1,4 @@
-Mario's score: 8
- survive time: 15
-
- survive time: 10
+player1's score: 4
+player1's survive time: 8
+player1: local
+player2: fc190bd1-3d35-4fac-96e2-97f9308e4fc3
