@@ -9,7 +9,7 @@ pub fn write_file(gameover: &GameState, frame_count: &FrameCount, ids: &PlayerId
 
     let score = gameover.score;
     let frame = frame_count.frame / 60;
-    let message = format!("score: {}\ntime: {}\n", score, frame);
+    let message = format!("Mario's score: {}\n survive time: {}", score, frame);
     let players = format!("player1: {}\nplayer2: {}", ids.player_ids[0], ids.player_ids[1]);
     file.write_all(message.as_bytes());
     file.write_all(players.as_bytes());

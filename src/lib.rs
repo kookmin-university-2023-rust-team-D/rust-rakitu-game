@@ -32,6 +32,12 @@ pub struct FrameCount {
 pub struct Turtle{
 }
 
+
+#[derive(Component)]
+pub struct Lakitu{
+}
+
+
 #[derive(Default, Reflect, Component)]
 pub struct Velocity{
     pub speed: Vec3,
