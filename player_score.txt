@@ -1,2 +1,4 @@
-score: 6
- time: 7
+score: 0
+ time: 20
+player1: d1031460-a039-4153-958c-c22f164f3830
+ player2: local
