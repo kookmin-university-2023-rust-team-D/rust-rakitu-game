@@ -25,6 +25,76 @@ pub fn spawn_plane(
             )
         );
     }
+    commands.spawn(
+        (
+            SpriteBundle{
+                transform: Transform{
+                    translation: Vec3::new(window.width()/ 4.0 + 20.0, window.height()/ 2.0 + 100.0, 0.0),
+                    // scale: PLANE_SIZE,
+                    ..default()
+                } ,// z component doesn't matter in 2D game
+                // texture: assert_server.load("sprites/block_image_cropped.png"),
+                texture: assert_server.load("sprites/cc5.png"),
+                ..default()
+            },
+        )
+    );
+    commands.spawn(
+        (
+            SpriteBundle{
+                transform: Transform{
+                    translation: Vec3::new(window.width() - 100.0, window.height()/ 2.0 + 100.0, 0.0),
+                    // scale: PLANE_SIZE,
+                    ..default()
+                } ,// z component doesn't matter in 2D game
+                // texture: assert_server.load("sprites/block_image_cropped.png"),
+                texture: assert_server.load("sprites/cc5.png"),
+                ..default()
+            },
+        )
+    );
+    commands.spawn(
+        (
+            SpriteBundle{
+                transform: Transform{
+                    translation: Vec3::new(window.width()-  126.0, 60.0, 0.0),
+                    // scale: PLANE_SIZE,
+                    ..default()
+                } ,// z component doesn't matter in 2D game
+                // texture: assert_server.load("sprites/block_image_cropped.png"),
+                texture: assert_server.load("sprites/bush3.png"),
+                ..default()
+            },
+        )
+    );
+    commands.spawn(
+        (
+            SpriteBundle{
+                transform: Transform{
+                    translation: Vec3::new(window.width()/ 10.0, 70.0, 0.0),
+                    // scale: PLANE_SIZE,
+                    ..default()
+                } ,// z component doesn't matter in 2D game
+                // texture: assert_server.load("sprites/block_image_cropped.png"),
+                texture: assert_server.load("sprites/bush4.png"),
+                ..default()
+            },
+        )
+    );
+    commands.spawn(
+        (
+            SpriteBundle{
+                transform: Transform{
+                    translation: Vec3::new(window.width()/ 10.0 + 70.0, 66.0, 0.0),
+                    // scale: PLANE_SIZE,
+                    ..default()
+                } ,// z component doesn't matter in 2D game
+                // texture: assert_server.load("sprites/block_image_cropped.png"),
+                texture: assert_server.load("sprites/bush3.png"),
+                ..default()
+            },
+        )
+    );
 }
 
 pub fn spawn_text(
