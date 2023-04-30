@@ -6,6 +6,20 @@ use bevy_matchbox::prelude::*;
 use bevy_ggrs::*;
 //use matchbox_socket::{WebRtcSocket, PeerId};
 
+mod main_menu;
+use main_menu::MainMenuPlugin;
+
+mod game;
+use game::GamePlugin;
+
+pub mod events;
+use events::*;
+
+
+
+// use crate::events::GameOver;
+// use crate::events::GameOver;
+
 const INPUT_UP: u8 = 1 << 0;
 const INPUT_DOWN: u8 = 1 << 1;
 const INPUT_LEFT: u8 = 1 << 2;
@@ -40,8 +54,6 @@ pub struct FrameCount {
 }
 
 fn main() {
-    
-    // App::new();
     let mut app = App::new();
     GGRSPlugin::<GgrsConfig>::new()
         .with_input_system(input)
@@ -51,14 +63,20 @@ fn main() {
         .build(&mut app);
     
     app
+    // MainMenu (added)
+    .add_plugin(MainMenuPlugin)
+    // Beby Plugins 
     .add_plugins(DefaultPlugins)
     .insert_resource(FrameCount { frame: 0 })
+    // Startup Systems
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
-    .add_startup_systems((spawn_player, start_matchbox_socket))
-    .add_systems((wait_for_players, player_movement.in_schedule(GGRSSchedule)))
-    .add_system(turtle_movement)
-    .add_system(turtle_hit_player)
+    .add_plugin(GamePlugin)
+    // .add_startup_systems((spawn_player, start_matchbox_socket))
+    // // Systems
+    // .add_systems((wait_for_players, player_movement.in_schedule(GGRSSchedule)))
+    // .add_system(turtle_movement)
+    // .add_system(turtle_hit_player)
     .add_system(game_end_system)
     .run();   
 }

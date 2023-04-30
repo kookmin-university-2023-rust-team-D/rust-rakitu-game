@@ -1,8 +1,8 @@
 use bevy::{prelude::{Component, Vec3, Resource}, time::{Timer, TimerMode}};
 // enemy, player 모듈화
-pub mod enemy;
-pub mod player;
-pub mod turtles;
+// pub mod enemy;
+// pub mod player;
+// pub mod turtles;
 
 // use bevy::prelude::{Component, Vec3};
 
