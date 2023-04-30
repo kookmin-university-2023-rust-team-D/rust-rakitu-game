@@ -8,6 +8,10 @@ use bevy_matchbox::prelude::*;
 use bevy_ggrs::*;
 //use matchbox_socket::{WebRtcSocket, PeerId};
 
+mod filewriter;
+
+use filewriter::*;
+
 const INPUT_UP: u8 = 1 << 0;
 const INPUT_DOWN: u8 = 1 << 1;
 const INPUT_LEFT: u8 = 1 << 2;
@@ -24,11 +28,11 @@ pub const FPS: usize = 60;
 
 
 
-#[derive(Resource, Default, Reflect, Hash)]
-#[reflect(Hash)]
-pub struct FrameCount {
-    pub frame: u32,
-}
+// #[derive(Resource, Default, Reflect, Hash)]
+// #[reflect(Hash)]
+// pub struct FrameCount {
+//     pub frame: u32,
+// }
 
 fn main() {
     // App::new();
@@ -250,12 +254,12 @@ pub struct Velocity{
     pub speed: Vec3,
 }
 
-#[derive(Resource)]
-pub struct GameState{
-    pub is_game_over: bool,
-    pub score: i32,
-    pub hp: i32
-}
+// #[derive(Resource)]
+// pub struct GameState{
+//     pub is_game_over: bool,
+//     pub score: i32,
+//     pub hp: i32
+// }
 
 
 pub fn turtle_movement(
@@ -447,33 +451,33 @@ pub fn spawn_player(
     );
 }
 
-pub fn game_end_system(
-    mut commands: Commands,
-    focused_windows: Query<(Entity, &Window)>,
-    gameover: Res<GameState>,
-    input: Res<Input<KeyCode>>,
-    frame_count: ResMut<FrameCount>
-){
-    for (window, focus) in focused_windows.iter() {
-        if !focus.focused {
-            continue;
-        }
+// pub fn game_end_system(
+//     mut commands: Commands,
+//     focused_windows: Query<(Entity, &Window)>,
+//     gameover: Res<GameState>,
+//     input: Res<Input<KeyCode>>,
+//     frame_count: ResMut<FrameCount>
+// ){
+//     for (window, focus) in focused_windows.iter() {
+//         if !focus.focused {
+//             continue;
+//         }
 
-        if gameover.is_game_over && input.just_pressed(KeyCode::Q) {
-            write_file(&gameover, &frame_count);
-            commands.entity(window).despawn();
-        }
+//         if gameover.is_game_over && input.just_pressed(KeyCode::Q) {
+//             write_file(&gameover, &frame_count);
+//             commands.entity(window).despawn();
+//         }
         
-    }
-}
+//     }
+// }
 
-pub fn write_file(gameover: &GameState, frame_count: &FrameCount) -> std::io::Result<()> {
-    let mut file = File::create("player_score.txt")?;
+// pub fn write_file(gameover: &GameState, frame_count: &FrameCount) -> std::io::Result<()> {
+//     let mut file = File::create("player_score.txt")?;
 
-    let score = gameover.score;
-    let frame = frame_count.frame / 60;
-    let message = format!("score: {}\n time: {}", score, frame);
-    file.write_all(message.as_bytes());
+//     let score = gameover.score;
+//     let frame = frame_count.frame / 60;
+//     let message = format!("score: {}\n time: {}", score, frame);
+//     file.write_all(message.as_bytes());
 
-    Ok(())
-}
+//     Ok(())
+// }

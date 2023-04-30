@@ -1,2 +1,2 @@
-score: 0
- time: 5
+score: 10
+ time: 23
