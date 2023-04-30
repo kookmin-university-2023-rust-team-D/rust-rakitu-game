@@ -48,6 +48,7 @@ pub struct Player{
     pub is_enemy: bool,
     pub hp: i32,
     pub handle: usize,
+    pub velocity: f32,
 }
 
 //사용된 전역 변수들

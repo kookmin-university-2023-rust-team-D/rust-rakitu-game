@@ -34,7 +34,7 @@ pub fn spawn_enemy(
             (
                 SpriteBundle{
                     transform: Transform::from_xyz(random_x, window.height() - 100.0, 0.0),
-                    texture: assert_server.load("sprites/lakitu.png"),
+                    texture: assert_server.load("sprites/old-lakitu.png"),
                     ..default()
                 },
                 Enemy{
@@ -135,7 +135,7 @@ pub fn spawn_enemies_over_time(
             commands.spawn((
                 SpriteBundle {
                     transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
-                    texture: asset_server.load("sprites/lakitu2.png"),
+                    texture: asset_server.load("sprites/old-lakitu.png"),
                     ..default()
                 },
                 Turtle{

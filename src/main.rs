@@ -121,7 +121,7 @@ pub fn player_movement(
     mut commands: Commands,
     assert_server: Res<AssetServer>,
     inputs: Res<PlayerInputs<GgrsConfig>>,
-    mut player_query: Query<(&Player, &mut Transform), With<Rollback>>,
+    mut player_query: Query<(&mut Player, &mut Transform), With<Rollback>>,
     gamestate: ResMut<GameState>,
     mut frame_count: ResMut<FrameCount>,
     window_query: Query<&Window, With<PrimaryWindow>>,
@@ -132,18 +132,18 @@ pub fn player_movement(
     let window: &Window = window_query.get_single().unwrap(); 
     let x_min = 15.0;
     let x_max = window.width() - 15.0;
-    for (player, mut transform) in player_query.iter_mut(){
+    for (mut player, mut transform) in player_query.iter_mut(){
         if !(gamestate.is_game_over){
             let mut direction = Vec2::ZERO;
 
         let (input, _) = inputs[player.handle];
 
         if input & INPUT_RIGHT != 0 {
-            direction.x += 1.;
+            direction.x = 1.;
             transform.scale.x = 1.0;
         }
         if input & INPUT_LEFT != 0 {
-            direction.x -= 1.;
+            direction.x = 1.;
             transform.scale.x = -1.0;
         }
         if input & INPUT_TURTLE != 0 && (frame_count.frame % 20 == 0){
@@ -154,7 +154,7 @@ pub fn player_movement(
                 commands.spawn((
                     SpriteBundle {
                         transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
-                        texture: assert_server.load("sprites/turtle.png"),
+                        texture: assert_server.load("sprites/old_turtle.png"),
                         ..default()
                     },
                     Turtle{
@@ -169,10 +169,10 @@ pub fn player_movement(
             continue;
         }
         println!("player {:?} moved", player.handle); 
-        let move_speed = 30.0;
-        let move_delta = (direction * move_speed).extend(0.);
-
-        transform.translation += move_delta;
+        // let move_speed = 30.0;
+        // let move_delta = (direction * move_speed).extend(0.);
+        player.velocity = player.velocity + direction.x;
+        // transform.translation += move_delta;
         let mut translation = transform.translation;
         if translation.x < x_min {
             translation.x = x_min;
@@ -180,7 +180,8 @@ pub fn player_movement(
         else if translation.x > x_max {
             translation.x = x_max;
         }
-        transform.translation = translation;
+        transform.translation = Vec3::new(player.velocity, 0.0, 0.0);
+        // transform.translation = translation;
     }
 }
 }
@@ -203,6 +204,7 @@ pub fn spawn_player(
                 is_enemy: false,
                 hp: 2,
                 handle: 0,
+                velocity: 1.1,
             },
             rip.next(),
             SpriteBundle{
@@ -210,7 +212,7 @@ pub fn spawn_player(
                     translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/mario_running.png"),
+                    texture: assert_server.load("sprites/mario.png"),
                     ..default()
             },
         )
@@ -223,6 +225,7 @@ pub fn spawn_player(
                 is_enemy: true,
                 hp: 2,
                 handle: 1,
+                velocity: 1.1
             },
             rip.next(),
             SpriteBundle{
@@ -230,7 +233,7 @@ pub fn spawn_player(
                     translation: Vec3::new(window.width() / 3.0, window.height() - 100.0, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/lakitu.png"),
+                    texture: assert_server.load("sprites/old-lakitu.png"),
                     ..default()
             },
         )

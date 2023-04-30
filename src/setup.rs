@@ -10,10 +10,10 @@ pub fn spawn_plane(
     let window: &Window = window_query.get_single().unwrap();
     commands.spawn(
         (
-            SpriteBundle{
+            SpriteBundle{ 
                 transform: Transform{
                     translation: Vec3::new(window.height() / 2.0 , 23.0, 0.0),
-                    scale: PLANE_SIZE,
+                    scale: PLANE_SIZE, 
                     ..default()
                 } ,// z component doesn't matter in 2D game
                 texture: assert_server.load("sprites/tile_0002.png"),
@@ -115,7 +115,7 @@ pub fn spawn_lakitu(
                     translation: Vec3::new(window.width() / 3.0, window.height() - 100.0, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/lakitu.png"),
+                    texture: assert_server.load("sprites/old-lakitu.png"),
                     ..default()
             },
             Velocity{
