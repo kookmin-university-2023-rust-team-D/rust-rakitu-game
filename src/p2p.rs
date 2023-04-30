@@ -1,7 +1,7 @@
 use bevy::{prelude::*};
 use bevy_matchbox::prelude::*;
 use bevy_ggrs::*;
-use rust_rakitu_game::{GgrsConfig};
+use rust_rakitu_game::{GgrsConfig, PlayerIds};
 
 pub fn start_matchbox_socket(mut commands: Commands) {
     let room_url = "ws://127.0.0.1:3536/room";
@@ -9,7 +9,7 @@ pub fn start_matchbox_socket(mut commands: Commands) {
     commands.insert_resource(MatchboxSocket::new_ggrs(room_url));
 }
 
-pub fn wait_for_players(mut commands: Commands, mut socket: ResMut<MatchboxSocket<SingleChannel>>) {
+pub fn wait_for_players(mut commands: Commands, mut socket: ResMut<MatchboxSocket<SingleChannel>>, mut resource: ResMut<PlayerIds>) {
     if socket.get_channel(0).is_err() {
         return; // we've already started
     }
@@ -23,6 +23,21 @@ pub fn wait_for_players(mut commands: Commands, mut socket: ResMut<MatchboxSocke
         return; // wait for more players
     }
 
+    for player in players.iter(){
+        match player{
+            ggrs::PlayerType::Local => {
+                resource.player_ids.push("local".to_owned());
+            },
+            ggrs::PlayerType::Remote(peer_id) => {
+                resource.player_ids.push(peer_id.0.to_string());
+            }
+            ggrs::PlayerType::Spectator(_) => {},
+        }
+    }
+
+    for id in resource.player_ids.iter(){
+        println!("{}",id);
+    }
     info!("All peers have joined, going in-game");
     // TODO
     // create a GGRS P2P session
