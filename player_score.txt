@@ -1,2 +1,4 @@
 Mario's score: 8
+ survive time: 15
+
  survive time: 10

@@ -16,6 +16,11 @@ pub struct GameState{
     pub hp: i32
 }
 
+#[derive(Resource)]
+pub struct PlayerIds{
+    pub player_ids: Vec<String>
+}
+
 
 #[derive(Resource, Default, Reflect, Hash)]
 #[reflect(Hash)]
