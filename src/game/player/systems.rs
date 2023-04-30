@@ -113,9 +113,8 @@ pub fn wait_for_players(mut commands: Commands, mut socket: ResMut<MatchboxSocke
     let ggrs_session = session_builder
         .start_p2p_session(channel)
         .expect("failed to start session");
-    println!("im in!!!!!!!!!! wait!!!!");
+
     commands.insert_resource(bevy_ggrs::Session::P2PSession(ggrs_session));
-    println!("im in!!!!!!!!!! wait!!!!");
 
 }
 pub fn spawn_player(

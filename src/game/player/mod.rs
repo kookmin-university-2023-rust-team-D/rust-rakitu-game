@@ -30,8 +30,8 @@ impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
             app 
             // .add_system(player_movement)
-            .add_systems((wait_for_players, player_movement.in_schedule(GGRSSchedule)))
-            .add_startup_systems((spawn_player, start_matchbox_socket));
+            .add_startup_systems((spawn_player, start_matchbox_socket))
+            .add_systems((wait_for_players, player_movement.in_schedule(GGRSSchedule)));
             // .add_system(confine_player_movement)
     }
 }

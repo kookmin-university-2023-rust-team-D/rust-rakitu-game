@@ -1,6 +1,6 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use rust_rakitu_game::{PLANE_SIZE, PLANE, PLAYER_SIZE};
-
+use bevy::app::AppExit;
 use bevy_matchbox::prelude::*;
 //use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
 use bevy_ggrs::*;
@@ -8,13 +8,14 @@ use bevy_ggrs::*;
 
 mod main_menu;
 use main_menu::MainMenuPlugin;
-
+ 
 mod game;
 use game::GamePlugin;
 
+use game::*;
+
 pub mod events;
 use events::*;
-
 
 
 // use crate::events::GameOver;
@@ -52,7 +53,6 @@ pub const FPS: usize = 60;
 pub struct FrameCount {
     pub frame: u32,
 }
-
 fn main() {
     let mut app = App::new();
     GGRSPlugin::<GgrsConfig>::new()
@@ -67,19 +67,58 @@ fn main() {
     .add_plugin(MainMenuPlugin)
     // Beby Plugins 
     .add_plugins(DefaultPlugins)
+    .add_state::<AppState>()
     .insert_resource(FrameCount { frame: 0 })
     // Startup Systems
     .add_startup_system(spawn_camera)
-    .add_startup_system(spawn_plane)
-    .add_plugin(GamePlugin)
-    // .add_startup_systems((spawn_player, start_matchbox_socket))
-    // // Systems
-    // .add_systems((wait_for_players, player_movement.in_schedule(GGRSSchedule)))
-    // .add_system(turtle_movement)
-    // .add_system(turtle_hit_player)
+    .add_startup_system(spawn_plane) 
+    
+    // .add_plugin(GamePlugin)
+    .add_startup_systems((spawn_player, start_matchbox_socket))
+    // // // Systems
+    .add_systems((wait_for_players
+        , player_movement.in_schedule(GGRSSchedule)))
+    // .add_system(confine_player_movement)
+    .add_system(turtle_movement)
+    .insert_resource(Score{value:0})
+    .add_system(turtle_hit_player)
     .add_system(game_end_system)
+    .add_event::<GameOver>()
+    .add_system(handle_game_over)
+    .add_system(exit_game)
     .run();   
 }
+
+#[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+pub enum AppState{
+    #[default]
+    MainMenu,
+    Game,
+    GameOver,
+}
+pub fn exit_game(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut app_exit_event_writer: EventWriter<AppExit>,
+) {
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        app_exit_event_writer.send(AppExit);
+    }
+}
+pub fn handle_game_over(
+    mut game_over_event_reader: EventReader<GameOver>,
+    mut app_state_next_state: ResMut<NextState<AppState>>,
+) {
+    for event in game_over_event_reader.iter() {
+        println!("Your final score is: {}", event.score.to_string());
+        app_state_next_state.set(AppState::GameOver);
+        println!("Entered AppState::GameOver");
+    }
+}
+
+
+
+
+
 
 
 fn input(_: In<ggrs::PlayerHandle>, keys: Res<Input<KeyCode>>) -> u8 {
@@ -140,7 +179,7 @@ pub fn wait_for_players(mut commands: Commands, mut socket: ResMut<MatchboxSocke
     // TODO
     // create a GGRS P2P session
     let mut session_builder = ggrs::SessionBuilder::<GgrsConfig>::new()
-        .with_num_players(num_players)
+        .with_num_players(num_players) 
         .with_input_delay(2);
 
     for (i, player) in players.into_iter().enumerate() {
@@ -237,7 +276,7 @@ pub fn spawn_turtle(
                 transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
                 texture: asset_server.load("sprites/turtle.png"),
                 ..default()
-            },
+            }, 
             Turtle{
             },
             Velocity{
@@ -283,14 +322,60 @@ pub fn turtle_movement(
 
 }
 
+
+#[derive(Resource)]
+pub struct Score {
+    pub value: u32,
+}
+
+impl Default for Score {
+    fn default() -> Score {
+        Score { value: 0 }
+    }
+}
+
+#[derive(Resource, Debug)]
+pub struct HighScores {
+    pub scores: Vec<(String, u32)>,
+}
+
+impl Default for HighScores {
+    fn default() -> HighScores {
+        HighScores { scores: Vec::new() }
+    }
+}
+
+
+pub fn update_score(score: Res<Score>) {
+    if score.is_changed() {
+        println!("Score: {}", score.value.to_string());
+    }
+}
+
+pub fn update_high_scores(
+    mut game_over_event_reader: EventReader<GameOver>,
+    mut high_scores: ResMut<HighScores>,
+) {
+    for event in game_over_event_reader.iter() {
+        high_scores.scores.push(("Player".to_string(), event.score));
+    }
+}
+
+pub fn high_scores_updated(high_scores: Res<HighScores>) {
+    if high_scores.is_changed() {
+        println!("High Scores: {:?}", high_scores);
+    }
+}
+
+
 pub fn turtle_hit_player(
     mut commands: Commands,
-    //mut game_over_event_writer: EventWriter<GameOver>,
+    mut game_over_event_writer: EventWriter<GameOver>,
     mut player_query: Query<(Entity, &mut Player, &Transform, &mut GameState), With<Rollback>>,
     enemy_query: Query<(Entity, &Transform), With<Turtle>>,
     //asset_server: Res<AssetServer>,
     //audio: Res<Audio>,
-    //score: Res<Score>,
+    mut score: ResMut<Score>,
 ) {
     for (player_entity, mut player, player_transform, mut game_state) in  player_query.iter_mut() {
         for (turtle_entity, enemy_transform) in enemy_query.iter() {
@@ -305,13 +390,15 @@ pub fn turtle_hit_player(
                 //audio.play(sound_effect);
                 commands.entity(turtle_entity).despawn();
                 player.hp -= 1;
+                // score.value += 1;
                 if player.hp <= 0 {
                     game_state.is_game_over = true;
                     commands.entity(player_entity).despawn();
                     println!("Enemy hit player! Game Over!");
-                    println!("Score: {}", game_state.score);
+                    // println!("Score: {}", game_state.score);
+                    game_over_event_writer.send(GameOver { score: score.value });
+
                 }
-                //game_over_event_writer.send(GameOver { score: score.value });
             }
         }
     }
@@ -325,7 +412,10 @@ pub fn player_movement(
     mut player_query: Query<(&Player, &mut Transform), With<Rollback>>,
     mut frame_count: ResMut<FrameCount>,
     //time: Res<Time>,
+    mut score: ResMut<Score>,
+
 ){
+
     frame_count.frame += 1;
     for (player, mut transform) in player_query.iter_mut(){ 
         let mut direction = Vec2::ZERO;
@@ -346,6 +436,7 @@ pub fn player_movement(
         }
         if input & INPUT_TURTLE != 0 && (frame_count.frame % 20 == 0){
             if player.is_enemy{
+                score.value += 1;
                 let turtle_x = transform.translation.x;
                 let turtle_y = transform.translation.y;
                 println!("turtle spawn");
@@ -380,6 +471,8 @@ pub fn spawn_player(
     mut rip: ResMut<RollbackIdProvider>,
     window_query: Query<&Window, With<PrimaryWindow>>,
     assert_server: Res<AssetServer>,
+    mut score: ResMut<Score>,
+
 ){
     //window 객체 에서 윈도우 속성 뽑아오기
     let window: &Window = window_query.get_single().unwrap();
@@ -441,11 +534,11 @@ pub fn game_end_system(
     input: Res<Input<KeyCode>>,
 ){
     for (window, focus) in focused_windows.iter() {
-        if !focus.focused {
+        if !focus.focused { 
             continue;
         }
         if input.just_pressed(KeyCode::Q) {
             commands.entity(window).despawn();
-        }
+        } 
     }
 }

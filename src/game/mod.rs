@@ -13,14 +13,14 @@ use self::turtles::TurtlePlugin;
  pub struct GamePlugin;
 
  impl Plugin for GamePlugin{
-    fn build(&self, app: &mut App){
+    fn build(&self, app:  &mut App){
         app
             // Events
             // .add_event::<GameOver>()
             // Plugins
             // .add_plugin(EnemyPlugin)
-            .add_plugin(PlayerPlugin)
-            .add_plugin(TurtlePlugin);
+            .add_plugin(PlayerPlugin);
+            // .add_plugin(TurtlePlugin);
     }
  }
 
