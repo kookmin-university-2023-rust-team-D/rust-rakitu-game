@@ -1,5 +1,5 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use rust_rakitu_game::{player::PlayerPlugin, enemy::EnemyPlugin, PLANE_SIZE,PLANE, PLAYER_SIZE, TurtleSpawnTimer, turtles::TurtlePlugin};
+use rust_rakitu_game::{PLANE_SIZE, PLANE, PLAYER_SIZE};
 
 use bevy_matchbox::prelude::*;
 //use bevy::{prelude::*, render::camera::ScalingMode, tasks::IoTaskPool};
@@ -10,9 +10,36 @@ const INPUT_UP: u8 = 1 << 0;
 const INPUT_DOWN: u8 = 1 << 1;
 const INPUT_LEFT: u8 = 1 << 2;
 const INPUT_RIGHT: u8 = 1 << 3;
-const INPUT_FIRE: u8 = 1 << 4;
+const INPUT_TURTLE: u8 = 1 << 4;
+const INPUT_QUIT: u8 = 1 << 5;
+
+pub const TURTLE_SIZE: f32 = 60.0;
+pub const NUMBER_OF_ENEMIES: usize = 4;
+pub const ENEMY_SPEED: f32 = 300.0;
+pub const PLAYER_SPEED: f32 = 500.0;
+pub const TURTLE_SPAWN_TIME: f32 = 0.1;
+pub const FPS: usize = 60;
 
 
+// #[derive(Reflect, Resource)]
+// pub struct TurtleSpawnTimer {
+//     pub spawn_timer: Timer,
+// }
+// impl Default for TurtleSpawnTimer {
+//     fn default() -> TurtleSpawnTimer {
+//         TurtleSpawnTimer {
+//             spawn_timer: Timer::from_seconds(TURTLE_SPAWN_TIME, TimerMode::Repeating),
+//         }
+//     }
+// }
+
+
+
+#[derive(Resource, Default, Reflect, Hash)]
+#[reflect(Hash)]
+pub struct FrameCount {
+    pub frame: u32,
+}
 
 fn main() {
     
@@ -21,32 +48,29 @@ fn main() {
     GGRSPlugin::<GgrsConfig>::new()
         .with_input_system(input)
         .register_rollback_component::<Transform>()
+        .with_update_frequency(FPS)
+        .register_rollback_resource::<FrameCount>()
         .build(&mut app);
     
-    /*app.insert_resource(ClearColor(Color::WHITE))
+    app
     .add_plugins(DefaultPlugins.set(WindowPlugin {
         primary_window: Some(Window {
             title: "Final Project Team B".to_string(),
-            fit_canvas_to_parent: true,
-            prevent_default_event_handling: false,
             ..default()
         }),
         ..default()
-    }))*/
-    app
-    .add_plugins(DefaultPlugins)
-    //.add_plugin(PlayerPlugin)
-    .add_plugin(EnemyPlugin)
-    .add_plugin(TurtlePlugin)
-    .init_resource::<TurtleSpawnTimer>() // 기본적인 설정을 해줍니다. 이것만 있으면 검은색 공간이 appear
+    }))
+    //.add_plugins(DefaultPlugins)
+    .insert_resource(FrameCount { frame: 0 })
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
-    .add_system(tick_turtle_spawn_timer)
     .add_startup_systems((spawn_player, start_matchbox_socket))
     .add_systems((wait_for_players, player_movement.in_schedule(GGRSSchedule)))
+    .add_system(turtle_movement)
+    .add_system(turtle_hit_player)
+    .add_system(game_end_system)
     .run();   
 }
-
 
 fn input(_: In<ggrs::PlayerHandle>, keys: Res<Input<KeyCode>>) -> u8 {
     let mut input = 0u8;
@@ -64,11 +88,15 @@ fn input(_: In<ggrs::PlayerHandle>, keys: Res<Input<KeyCode>>) -> u8 {
         input |= INPUT_RIGHT;
     }
     if keys.any_pressed([KeyCode::Space, KeyCode::Return]) {
-        input |= INPUT_FIRE;
+        input |= INPUT_TURTLE;
+    }
+    if keys.any_pressed([KeyCode::Q]){
+        input |= INPUT_QUIT;
     }
 
     input
 }
+
 pub struct GgrsConfig;
 
 impl ggrs::Config for GgrsConfig {
@@ -140,6 +168,9 @@ pub fn spawn_plane(
                 texture: assert_server.load("sprites/tile_0002.png"),
                 ..default()
             },
+            GameState{
+                is_game_over: false,
+            }
         )
     );
 }
@@ -158,26 +189,122 @@ pub fn spawn_camera(
     );
 }
 
-pub fn tick_turtle_spawn_timer(mut enemy_spawn_timer: ResMut<TurtleSpawnTimer>, time: Res<Time>) {
-    enemy_spawn_timer.spawn_timer.tick(time.delta());
+// pub fn tick_turtle_spawn_timer(mut enemy_spawn_timer: ResMut<TurtleSpawnTimer>, time: Res<Time>) {
+//     enemy_spawn_timer.spawn_timer.tick(time.delta());
+// }
+
+#[derive(Component)]
+pub struct Player{
+    pub is_enemy: bool,
+    pub hp: i32,
+    pub handle: usize,
+    pub score: i32
+}
+
+#[derive(Component)]
+pub struct Turtle{
+}
+
+#[derive(Default, Reflect, Component)]
+pub struct Velocity{
+    pub speed: Vec3,
+}
+
+#[derive(Component)]
+pub struct GameState{
+    pub is_game_over: bool,
 }
 
 
-pub const PLAYER_SPEED: f32 = 500.0;
-#[derive(Component)]
-pub struct Player{
-    pub hp: i32,
-    pub handle: usize
+pub fn turtle_movement(
+    mut commands: Commands,
+    //window_query: Query<&Window, With<PrimaryWindow>>,
+    mut turtle_query: Query<(Entity, &mut Velocity, &mut Transform),  With<Turtle>>,
+    mut player_query: Query<&mut Player>,
+    time: Res<Time>,
+){
+    for (turtle, velocity, mut transform) in turtle_query.iter_mut(){
+        let mut direction = Vec3::ZERO;
+        //let window: &Window = window_query.get_single().unwrap(); 
+
+        let y_min = 15.0;
+        
+        direction += velocity.speed;
+
+        if direction.length() > 0.0{
+            direction = direction.normalize();
+        }
+
+        transform.translation += direction * ENEMY_SPEED * time.delta_seconds();
+
+        let translation = transform.translation;
+        if translation.y < y_min {
+            for mut player in player_query.iter_mut(){
+                player.score += 1;
+            }
+            commands.entity(turtle).despawn();
+        }
+
+        transform.translation = translation;
+    }
+    // let (mut velocity, mut transform) = enemy_query.single_mut();
+    
+
+}
+
+pub fn turtle_hit_player(
+    mut commands: Commands,
+    //mut game_over_event_writer: EventWriter<GameOver>,
+    mut player_query: Query<(Entity, &mut Player, &Transform), With<Rollback>>,
+    mut state_query: Query<&mut GameState>,
+    enemy_query: Query<(Entity, &Transform), With<Turtle>>,
+    //asset_server: Res<AssetServer>,
+    //audio: Res<Audio>,
+    //score: Res<Score>,
+) {
+    for (player_entity, mut player, player_transform) in  player_query.iter_mut() {
+        for (turtle_entity, enemy_transform) in enemy_query.iter() {
+            let distance = player_transform
+                .translation
+                .distance(enemy_transform.translation);
+            let player_radius = PLAYER_SIZE / 2.0;
+            let enemy_radius = TURTLE_SIZE / 2.0;
+            if distance < (player_radius + enemy_radius) && !(player.is_enemy) {
+                println!("Enemy hit player!");
+                //let sound_effect = asset_server.load("audio/explosionCrunch_000.ogg");
+                //audio.play(sound_effect);
+                commands.entity(turtle_entity).despawn();
+                player.hp -= 1;
+                if player.hp <= 0 {
+                    for mut gamestate in state_query.iter_mut(){
+                        gamestate.is_game_over = true;
+                        println!("{}", gamestate.is_game_over)
+                    }
+                    commands.entity(player_entity).despawn();
+                    println!("Enemy hit player! Game Over!");
+                    println!("Score: {}", player.score);
+                }
+                //game_over_event_writer.send(GameOver { score: score.value });
+            }
+        }
+    }
 }
 
 //플레이어 움직임 구현
 pub fn player_movement(
+    mut commands: Commands,
+    assert_server: Res<AssetServer>,
     inputs: Res<PlayerInputs<GgrsConfig>>,
-    mut player_query: Query<(&Player, &mut Transform),With<Player>>,
+    mut player_query: Query<(&Player, &mut Transform), With<Rollback>>,
+    state_query: Query<&GameState>,
+    mut frame_count: ResMut<FrameCount>,
     //time: Res<Time>,
 ){
-    for (player, mut transform) in player_query.iter_mut(){ 
-        let mut direction = Vec2::ZERO;
+    let state = state_query.get_single().unwrap();
+    frame_count.frame += 1;
+    for (player, mut transform) in player_query.iter_mut(){
+        if !(state.is_game_over){
+            let mut direction = Vec2::ZERO;
 
         let (input, _) = inputs[player.handle];
 
@@ -193,42 +320,35 @@ pub fn player_movement(
         if input & INPUT_LEFT != 0 {
             direction.x -= 1.;
         }
+        if input & INPUT_TURTLE != 0 && (frame_count.frame % 20 == 0){
+            if player.is_enemy{
+                let turtle_x = transform.translation.x;
+                let turtle_y = transform.translation.y;
+                println!("turtle spawn");
+                commands.spawn((
+                    SpriteBundle {
+                        transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
+                        texture: assert_server.load("sprites/turtle.png"),
+                        ..default()
+                    },
+                    Turtle{
+                    },
+                    Velocity{
+                        speed: Vec3::new(0.0, -1.0, 0.0),
+                    },
+                ));
+            }
+        }
         if direction == Vec2::ZERO {
             continue;
         }
-
         println!("player {:?} moved", player.handle); 
         let move_speed = 30.0;
         let move_delta = (direction * move_speed).extend(0.);
 
         transform.translation += move_delta; 
-    // //키보드 인풋을 받아 플레이어를 움직이게 만든다.
-    // if let Ok(mut transform) = player_query.get_single_mut(){
-    //     let mut direction = Vec3::ZERO;
-
-    //     if input & INPUT_RIGHT != 0 {
-    //         direction.x += 1.;
-    //     }
-    //     if input & INPUT_LEFT != 0 {
-    //         direction.x -= 1.;
-    //     }
-    //     if direction == Vec2::ZERO {
-    //         return;
-    //     }
-        // if keyboard_input.pressed(KeyCode::Left) || keyboard_input.pressed(KeyCode::A){
-        //     direction += Vec3::new(-1.0, 0.0, 0.0);
-        //     transform.scale = Vec3::new(-1.0, 1.0, 0.0);
-        // }
-        // if keyboard_input.pressed(KeyCode::Right) || keyboard_input.pressed(KeyCode::D){
-        //     direction += Vec3::new(1.0, 0.0, 0.0);
-        //     transform.scale = Vec3::new(1.0, 1.0, 0.0);
-        // }
-
-        // if direction.length() > 0.0{ 
-        //     direction = direction.normalize();
-        // }
-        // transform.translation += direction * PLAYER_SPEED * time.delta_seconds();
     }
+}
 }
 
 pub fn spawn_player(
@@ -242,11 +362,14 @@ pub fn spawn_player(
 
     //플레이어1 엔티티 생성
     //111111
+    println!("player spawn");
     commands.spawn(
         (
             Player{
+                is_enemy: false,
                 hp: 2,
-                handle: 0
+                handle: 0,
+                score: 0
             },
             rip.next(),
             SpriteBundle{
@@ -265,33 +388,38 @@ pub fn spawn_player(
     commands.spawn(
         (
             Player{
+                is_enemy: true,
                 hp: 2,
-                handle: 1
+                handle: 1,
+                score: 0
             },
             rip.next(),
             SpriteBundle{
                 transform: Transform{
-                    translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
+                    translation: Vec3::new(window.width() / 3.0, window.height() - 100.0, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/mario_stop.png"),
+                    texture: assert_server.load("sprites/lakitu.png"),
                     ..default()
             },
         )
     );
 }
 
-/*pub fn spawn(mut commands: Commands, mut rip: ResMut<RollbackIdProvider>) {
-    commands.spawn(
-        (
-            Player { handle: 0 }, rip.next(), SpriteBundle {
-        transform: Transform::from_translation(Vec3::new(-2., 0., 100.)),
-        sprite: Sprite { color: Color::BLUE, ..default() },
-        ..default()
-    }));
-    commands.spawn((Player { handle: 1 }, rip.next(), SpriteBundle {
-        transform: Transform::from_translation(Vec3::new(2., 0., 100.)),
-        sprite: Sprite { color: Color::RED, ..default() },
-        ..default()
-    }));
-}*/
+pub fn game_end_system(
+    mut commands: Commands,
+    focused_windows: Query<(Entity, &Window)>,
+    game_state: Query<&GameState, Without<Player>>,
+    input: Res<Input<KeyCode>>,
+){
+    for (window, focus) in focused_windows.iter() {
+        if !focus.focused {
+            continue;
+        }
+        for state in game_state.iter(){
+            if state.is_game_over && input.just_pressed(KeyCode::Q) {
+                commands.entity(window).despawn();
+            }
+        }
+    }
+}
