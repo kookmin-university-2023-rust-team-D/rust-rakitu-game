@@ -1,5 +1,6 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use rust_rakitu_game::{GameState, PLANE_SIZE, Lakitu, Velocity, ENEMY_SPEED, FrameCount};
+use bevy_ggrs::*;
+use rust_rakitu_game::{GameState, PLANE_SIZE, PLAYER_SIZE, PLANE, Lakitu, Velocity, Player, FrameCount};
 
 
 pub fn spawn_plane(
@@ -126,47 +127,99 @@ pub fn spawn_lakitu(
 
 }
 
-
-pub fn lakitu_movement(
+pub fn spawn_player(
+    mut commands: Commands,
+    mut rip: ResMut<RollbackIdProvider>,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    mut enemy_query: Query<(&mut Velocity, &mut Transform),  With<Lakitu>>,
-    time: Res<Time>,
+    assert_server: Res<AssetServer>,
 ){
-    //Enemy 컴포넌트를 가진 엔티티들의 속도와 이동 설정
-    for (mut velocity, mut transform) in enemy_query.iter_mut(){
-        let mut direction: Vec3 = Vec3::ZERO;
-        let window: &Window = window_query.get_single().unwrap(); 
+    //window 객체 에서 윈도우 속성 뽑아오기
+    let window: &Window = window_query.get_single().unwrap();
 
-        let x_min = 15.0;
-        let x_max = window.width() - 15.0;
-        direction += velocity.speed;
+    //플레이어1 엔티티 생성
+    //111111
+    println!("player spawn");
+    commands.spawn(
+        (
+            Player{
+                is_enemy: false,
+                hp: 2,
+                handle: 0,
+            },
+            rip.next(),
+            SpriteBundle{
+                transform: Transform{
+                    translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
+                    ..default()
+                },
+                    texture: assert_server.load("sprites/mario_running.png"),
+                    ..default()
+            },
+        )
+    );
+    //player 2
+    //222222222
+    commands.spawn(
+        (
+            Player{
+                is_enemy: true,
+                hp: 2,
+                handle: 1,
+            },
+            rip.next(),
+            SpriteBundle{
+                transform: Transform{
+                    translation: Vec3::new(window.width() / 3.0, window.height() - 100.0, 0.0),
+                    ..default()
+                },
+                    texture: assert_server.load("sprites/lakitu.png"),
+                    ..default()
+            },
+        )
+    );
+}
 
-        if direction.length() > 0.0{
-            direction = direction.normalize();
-        }
-        // 랜덤으로 생성된 속도 적용
-        transform.translation += direction * ENEMY_SPEED * time.delta_seconds();
+
+// pub fn lakitu_movement(
+//     window_query: Query<&Window, With<PrimaryWindow>>,
+//     mut enemy_query: Query<(&mut Velocity, &mut Transform),  With<Lakitu>>,
+//     time: Res<Time>,
+// ){
+//     //Enemy 컴포넌트를 가진 엔티티들의 속도와 이동 설정
+//     for (mut velocity, mut transform) in enemy_query.iter_mut(){
+//         let mut direction: Vec3 = Vec3::ZERO;
+//         let window: &Window = window_query.get_single().unwrap(); 
+
+//         let x_min = 15.0;
+//         let x_max = window.width() - 15.0;
+//         direction += velocity.speed;
+
+//         if direction.length() > 0.0{
+//             direction = direction.normalize();
+//         }
+//         // 랜덤으로 생성된 속도 적용
+//         transform.translation += direction * ENEMY_SPEED * time.delta_seconds();
         
-        // 벽에 닿았을시, 밖으로 나갈 수 없에 설정
-        let mut translation = transform.translation;
-        if translation.x < x_min {
-            translation.x = x_min;
-            velocity.speed.x *= -1.0;
-            transform.scale.x *= -1.0;
-        }
-        else if translation.x > x_max {
-            translation.x = x_max;
-            velocity.speed.x *= -1.0;
-            transform.scale.x *= -1.0;
-        }
+//         // 벽에 닿았을시, 밖으로 나갈 수 없에 설정
+//         let mut translation = transform.translation;
+//         if translation.x < x_min {
+//             translation.x = x_min;
+//             velocity.speed.x *= -1.0;
+//             transform.scale.x *= -1.0;
+//         }
+//         else if translation.x > x_max {
+//             translation.x = x_max;
+//             velocity.speed.x *= -1.0;
+//             transform.scale.x *= -1.0;
+//         }
 
-        //최종 transform 설정
-        transform.translation = translation;
-    }
-    // let (mut velocity, mut transform) = enemy_query.single_mut();
+//         //최종 transform 설정
+//         transform.translation = translation;
+//     }
+//     // let (mut velocity, mut transform) = enemy_query.single_mut();
     
 
-}
+// }
 
 
 pub fn spawn_camera(
