@@ -1,11 +1,18 @@
 use bevy::{prelude::*, window::PrimaryWindow};
-use rust_rakitu_game::{PLANE_SIZE, PLANE, PLAYER_SIZE};
+use rust_rakitu_game::*;
+// use rust_rakitu_game::{PLANE_SIZE, PLANE, PLAYER_SIZE};
 use bevy::app::AppExit;
 use bevy_matchbox::prelude::*;
 use bevy_ggrs::*;
 
+
+
+
 mod main_menu;
 use main_menu::MainMenuPlugin;
+
+mod game;
+use game::player::PlayerPlugin;
 
 pub mod events;
 use events::*;
@@ -37,7 +44,7 @@ fn main() {
         .with_update_frequency(FPS)
         .register_rollback_resource::<FrameCount>()
         .build(&mut app);
-    
+
     app
     // MainMenu (added)
     .add_plugin(MainMenuPlugin)
@@ -67,8 +74,6 @@ fn main() {
     .add_system(turtle_hit_player)
     .add_system(game_end_system)
     .add_event::<GameOver>()
-    .add_system(handle_game_over)
-    .add_system(exit_game)
     .run();   
 }
 
@@ -97,9 +102,6 @@ pub fn handle_game_over(
         println!("Entered AppState::GameOver");
     }
 }
-
-
-
 
 
 
@@ -520,20 +522,20 @@ pub fn spawn_player(
     );
 }
 
-pub fn game_end_system(
-    mut commands: Commands,
-    focused_windows: Query<(Entity, &Window)>,
-    game_state: Query<&GameState, Without<Player>>,
-    input: Res<Input<KeyCode>>,
-){
-    for (window, focus) in focused_windows.iter() {
-        if !focus.focused { 
-            continue;
-        }
-        for state in game_state.iter(){
-            if state.is_game_over && input.just_pressed(KeyCode::Q) {
-                commands.entity(window).despawn();
-            }
-        }
-    }
-}
+// pub fn game_end_system(
+//     mut commands: Commands,
+//     focused_windows: Query<(Entity, &Window)>,
+//     game_state: Query<&GameState, Without<Player>>,
+//     input: Res<Input<KeyCode>>,
+// ){
+//     for (window, focus) in focused_windows.iter() {
+//         if !focus.focused { 
+//             continue;
+//         }
+//         for state in game_state.iter(){
+//             if state.is_game_over && input.just_pressed(KeyCode::Q) {
+//                 commands.entity(window).despawn();
+//             }
+//         }
+//     }
+// }

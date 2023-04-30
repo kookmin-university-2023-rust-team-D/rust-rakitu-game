@@ -1,3 +1,6 @@
+
+use bevy::{prelude::*, window::PrimaryWindow};
+
 use bevy::{prelude::{Component, Vec3, Resource}, time::{Timer, TimerMode}};
 // enemy, player 모듈화
 // pub mod enemy;
@@ -70,3 +73,27 @@ pub const ENEMY_SPEED: f32 = 300.0;
 pub const NUMBER_OF_ENEMIES: usize = 4;
 pub const TURTLE_SPAWN_TIME: f32 = 0.5;
 pub const LAKITU_ANNOYING_TIME: f32 = 5.0;
+
+#[derive(Component)]
+pub struct GameState{
+    pub is_game_over: bool,
+    // pub score: i32,
+}
+
+pub fn game_end_system(
+    mut commands: Commands,
+    focused_windows: Query<(Entity, &Window)>,
+    game_state: Query<&GameState, Without<Player>>,
+    input: Res<Input<KeyCode>>,
+){
+    for (window, focus) in focused_windows.iter() {
+        if !focus.focused { 
+            continue;
+        }
+        for state in game_state.iter(){
+            if state.is_game_over && input.just_pressed(KeyCode::Q) {
+                commands.entity(window).despawn();
+            }
+        }
+    }
+}
