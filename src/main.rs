@@ -11,6 +11,7 @@ const INPUT_DOWN: u8 = 1 << 1;
 const INPUT_LEFT: u8 = 1 << 2;
 const INPUT_RIGHT: u8 = 1 << 3;
 const INPUT_TURTLE: u8 = 1 << 4;
+const INPUT_QUIT: u8 = 1 << 5;
 
 pub const TURTLE_SIZE: f32 = 60.0;
 pub const NUMBER_OF_ENEMIES: usize = 4;
@@ -38,7 +39,6 @@ pub struct FrameCount {
     pub frame: u32,
 }
 
-
 fn main() {
     
     // App::new();
@@ -46,23 +46,20 @@ fn main() {
     GGRSPlugin::<GgrsConfig>::new()
         .with_input_system(input)
         .register_rollback_component::<Transform>()
-        //.register_rollback_resource::<TurtleSpawnTimer>()
         .with_update_frequency(FPS)
         .register_rollback_resource::<FrameCount>()
         .build(&mut app);
     
     app
     .add_plugins(DefaultPlugins)
-    //.add_system(increase_frame_system.in_schedule(GGRSSchedule))
-    //.init_resource::<TurtleSpawnTimer>()
     .insert_resource(FrameCount { frame: 0 })
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
     .add_startup_systems((spawn_player, start_matchbox_socket))
     .add_systems((wait_for_players, player_movement.in_schedule(GGRSSchedule)))
-    //.add_system(tick_turtle_spawn_timer)
     .add_system(turtle_movement)
     .add_system(turtle_hit_player)
+    .add_system(game_end_system)
     .run();   
 }
 
@@ -84,6 +81,9 @@ fn input(_: In<ggrs::PlayerHandle>, keys: Res<Input<KeyCode>>) -> u8 {
     }
     if keys.any_pressed([KeyCode::Space, KeyCode::Return]) {
         input |= INPUT_TURTLE;
+    }
+    if keys.any_pressed([KeyCode::Q]){
+        input |= INPUT_QUIT;
     }
 
     input
@@ -198,6 +198,12 @@ pub struct Velocity{
     pub speed: Vec3,
 }
 
+#[derive(Component)]
+pub struct GameState{
+    pub is_game_over: bool,
+    pub score: i32,
+}
+
 pub fn spawn_turtle(
     mut commands: Commands,
     //window_query: Query<&Window, With<PrimaryWindow>>,
@@ -227,6 +233,7 @@ pub fn turtle_movement(
     mut commands: Commands,
     //window_query: Query<&Window, With<PrimaryWindow>>,
     mut turtle_query: Query<(Entity, &mut Velocity, &mut Transform),  With<Turtle>>,
+    mut player_query: Query<&mut GameState, With<Player>>,
     time: Res<Time>,
 ){
     for (turtle, velocity, mut transform) in turtle_query.iter_mut(){
@@ -245,6 +252,9 @@ pub fn turtle_movement(
 
         let translation = transform.translation;
         if translation.y < y_min {
+            for mut game_state in player_query.iter_mut(){
+                game_state.score += 1;
+            }
             commands.entity(turtle).despawn();
         }
 
@@ -258,13 +268,13 @@ pub fn turtle_movement(
 pub fn turtle_hit_player(
     mut commands: Commands,
     //mut game_over_event_writer: EventWriter<GameOver>,
-    mut player_query: Query<(Entity, &mut Player, &Transform), With<Rollback>>,
+    mut player_query: Query<(Entity, &mut Player, &Transform, &mut GameState), With<Rollback>>,
     enemy_query: Query<(Entity, &Transform), With<Turtle>>,
     //asset_server: Res<AssetServer>,
     //audio: Res<Audio>,
     //score: Res<Score>,
 ) {
-    for (player_entity, mut player, player_transform) in  player_query.iter_mut() {
+    for (player_entity, mut player, player_transform, mut game_state) in  player_query.iter_mut() {
         for (turtle_entity, enemy_transform) in enemy_query.iter() {
             let distance = player_transform
                 .translation
@@ -278,8 +288,10 @@ pub fn turtle_hit_player(
                 commands.entity(turtle_entity).despawn();
                 player.hp -= 1;
                 if player.hp <= 0 {
+                    game_state.is_game_over = true;
                     commands.entity(player_entity).despawn();
                     println!("Enemy hit player! Game Over!");
+                    println!("Score: {}", game_state.score);
                 }
                 //game_over_event_writer.send(GameOver { score: score.value });
             }
@@ -372,6 +384,10 @@ pub fn spawn_player(
                     texture: assert_server.load("sprites/mario_running.png"),
                     ..default()
             },
+            GameState{
+                is_game_over: false,
+                score: 0
+            }
         )
     );
 
@@ -393,7 +409,25 @@ pub fn spawn_player(
                     texture: assert_server.load("sprites/lakitu.png"),
                     ..default()
             },
+            GameState{
+                is_game_over: false,
+                score: 0
+            }
         )
     );
 }
 
+pub fn game_end_system(
+    mut commands: Commands,
+    focused_windows: Query<(Entity, &Window)>,
+    input: Res<Input<KeyCode>>,
+){
+    for (window, focus) in focused_windows.iter() {
+        if !focus.focused {
+            continue;
+        }
+        if input.just_pressed(KeyCode::Q) {
+            commands.entity(window).despawn();
+        }
+    }
+}
