@@ -8,16 +8,14 @@ mod filewriter;
 mod input;
 mod setup;
 mod p2p;
-mod turtles;
-mod player;
+mod movement;
 
 
 use filewriter::*;
 use input::*;
 use setup::*;
 use p2p::*;
-use turtles::*;
-use player::*;
+use movement::*;
 
 fn main() {
     let mut app = App::new();

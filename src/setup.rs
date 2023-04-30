@@ -145,6 +145,7 @@ pub fn spawn_player(
                 is_enemy: false,
                 hp: 2,
                 handle: 0,
+                velocity: 0.2,
             },
             rip.next(),
             SpriteBundle{
@@ -165,6 +166,7 @@ pub fn spawn_player(
                 is_enemy: true,
                 hp: 2,
                 handle: 1,
+                velocity: 0.2,
             },
             rip.next(),
             SpriteBundle{

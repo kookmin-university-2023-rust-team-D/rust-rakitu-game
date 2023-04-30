@@ -109,11 +109,12 @@ pub fn turtle_hit_player(
     }
 }
 
+//플레이어 움직임 구현
 pub fn player_movement(
     mut commands: Commands,
     assert_server: Res<AssetServer>,
     inputs: Res<PlayerInputs<GgrsConfig>>,
-    mut player_query: Query<(&Player, &mut Transform), With<Rollback>>,
+    mut player_query: Query<(&mut Player, &mut Transform), With<Rollback>>,
     gamestate: ResMut<GameState>,
     mut frame_count: ResMut<FrameCount>,
     window_query: Query<&Window, With<PrimaryWindow>>,
@@ -122,20 +123,20 @@ pub fn player_movement(
         frame_count.frame += 1;
     }
     let window: &Window = window_query.get_single().unwrap(); 
-    let x_min = 15.0;
+    let x_min: f32 = 15.0;
     let x_max = window.width() - 15.0;
-    for (player, mut transform) in player_query.iter_mut(){
+    for (mut player, mut transform) in player_query.iter_mut(){
         if !(gamestate.is_game_over){
             let mut direction = Vec2::ZERO;
 
         let (input, _) = inputs[player.handle];
 
         if input & INPUT_RIGHT != 0 {
-            direction.x += 1.;
+            direction.x = 0.35;
             transform.scale.x = 1.0;
         }
         if input & INPUT_LEFT != 0 {
-            direction.x -= 1.;
+            direction.x = -0.35;
             transform.scale.x = -1.0;
         }
         if input & INPUT_TURTLE != 0 && (frame_count.frame % 20 == 0){
@@ -146,7 +147,7 @@ pub fn player_movement(
                 commands.spawn((
                     SpriteBundle {
                         transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
-                        texture: assert_server.load("sprites/turtle.png"),
+                        texture: assert_server.load("sprites/old_turtle.png"),
                         ..default()
                     },
                     Turtle{
@@ -158,19 +159,22 @@ pub fn player_movement(
             }
         }
         if direction == Vec2::ZERO {
-            continue;
+             player.velocity = player.velocity * 0.97;
+        }
+        else{
+            player.velocity = player.velocity + direction.x;
         }
         println!("player {:?} moved", player.handle); 
-        let move_speed = 30.0;
-        let move_delta = (direction * move_speed).extend(0.);
-
-        transform.translation += move_delta;
-        let mut translation = transform.translation;
+        // let move_speed = 30.0;
+        // let move_delta = (direction * move_speed).extend(0.);
+        let mut translation = transform.translation + Vec3::new(player.velocity/ 1.05, 0.0, 0.0);
         if translation.x < x_min {
             translation.x = x_min;
+            player.velocity = 0.;
         }
         else if translation.x > x_max {
             translation.x = x_max;
+            player.velocity = 0.;
         }
         transform.translation = translation;
     }
