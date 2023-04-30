@@ -9,7 +9,7 @@ pub fn write_file(gameover: &GameState, frame_count: &FrameCount) -> std::io::Re
 
     let score = gameover.score;
     let frame = frame_count.frame / 60;
-    let message = format!("score: {}\n time: {}", score, frame);
+    let message = format!("Mario's score: {}\n survive time: {}", score, frame);
     file.write_all(message.as_bytes());
 
     Ok(())

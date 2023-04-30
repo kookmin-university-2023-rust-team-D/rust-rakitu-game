@@ -1,2 +1,2 @@
-score: 6
- time: 7
+Mario's score: 8
+ survive time: 15
