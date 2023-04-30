@@ -21,19 +21,6 @@ pub const TURTLE_SPAWN_TIME: f32 = 0.1;
 pub const FPS: usize = 60;
 
 
-// #[derive(Reflect, Resource)]
-// pub struct TurtleSpawnTimer {
-//     pub spawn_timer: Timer,
-// }
-// impl Default for TurtleSpawnTimer {
-//     fn default() -> TurtleSpawnTimer {
-//         TurtleSpawnTimer {
-//             spawn_timer: Timer::from_seconds(TURTLE_SPAWN_TIME, TimerMode::Repeating),
-//         }
-//     }
-// }
-
-
 
 #[derive(Resource, Default, Reflect, Hash)]
 #[reflect(Hash)]
@@ -62,6 +49,7 @@ fn main() {
     }))
     //.add_plugins(DefaultPlugins)
     .insert_resource(FrameCount { frame: 0 })
+    .insert_resource(GameState { is_game_over: false})
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
     .add_startup_systems((spawn_player, start_matchbox_socket))
@@ -168,9 +156,6 @@ pub fn spawn_plane(
                 texture: assert_server.load("sprites/tile_0002.png"),
                 ..default()
             },
-            GameState{
-                is_game_over: false,
-            }
         )
     );
 }
@@ -210,7 +195,7 @@ pub struct Velocity{
     pub speed: Vec3,
 }
 
-#[derive(Component)]
+#[derive(Resource)]
 pub struct GameState{
     pub is_game_over: bool,
 }
@@ -256,7 +241,7 @@ pub fn turtle_hit_player(
     mut commands: Commands,
     //mut game_over_event_writer: EventWriter<GameOver>,
     mut player_query: Query<(Entity, &mut Player, &Transform), With<Rollback>>,
-    mut state_query: Query<&mut GameState>,
+    mut gameover: ResMut<GameState>,
     enemy_query: Query<(Entity, &Transform), With<Turtle>>,
     //asset_server: Res<AssetServer>,
     //audio: Res<Audio>,
@@ -276,10 +261,9 @@ pub fn turtle_hit_player(
                 commands.entity(turtle_entity).despawn();
                 player.hp -= 1;
                 if player.hp <= 0 {
-                    for mut gamestate in state_query.iter_mut(){
-                        gamestate.is_game_over = true;
-                        println!("{}", gamestate.is_game_over)
-                    }
+                    gameover.is_game_over = true;
+                    println!("{}", gameover.is_game_over);
+                    
                     commands.entity(player_entity).despawn();
                     println!("Enemy hit player! Game Over!");
                     println!("Score: {}", player.score);
@@ -296,14 +280,13 @@ pub fn player_movement(
     assert_server: Res<AssetServer>,
     inputs: Res<PlayerInputs<GgrsConfig>>,
     mut player_query: Query<(&Player, &mut Transform), With<Rollback>>,
-    state_query: Query<&GameState>,
+    gameover: ResMut<GameState>,
     mut frame_count: ResMut<FrameCount>,
     //time: Res<Time>,
 ){
-    let state = state_query.get_single().unwrap();
     frame_count.frame += 1;
     for (player, mut transform) in player_query.iter_mut(){
-        if !(state.is_game_over){
+        if !(gameover.is_game_over){
             let mut direction = Vec2::ZERO;
 
         let (input, _) = inputs[player.handle];
@@ -409,17 +392,17 @@ pub fn spawn_player(
 pub fn game_end_system(
     mut commands: Commands,
     focused_windows: Query<(Entity, &Window)>,
-    game_state: Query<&GameState, Without<Player>>,
+    gameover: ResMut<GameState>,
     input: Res<Input<KeyCode>>,
 ){
     for (window, focus) in focused_windows.iter() {
         if !focus.focused {
             continue;
         }
-        for state in game_state.iter(){
-            if state.is_game_over && input.just_pressed(KeyCode::Q) {
-                commands.entity(window).despawn();
-            }
+
+        if gameover.is_game_over && input.just_pressed(KeyCode::Q) {
+            commands.entity(window).despawn();
         }
+        
     }
 }
