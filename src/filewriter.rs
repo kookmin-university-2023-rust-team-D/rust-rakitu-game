@@ -2,21 +2,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use bevy::{prelude::*};
 
-#[derive(Resource)]
-pub struct GameState{
-    pub is_game_over: bool,
-    pub score: i32,
-    pub hp: i32
-}
-
-
-#[derive(Resource, Default, Reflect, Hash)]
-#[reflect(Hash)]
-pub struct FrameCount {
-    pub frame: u32,
-}
-
-
+use rust_rakitu_game::{GameState, FrameCount};
 
 pub fn write_file(gameover: &GameState, frame_count: &FrameCount) -> std::io::Result<()> {
     let mut file = File::create("player_score.txt")?;

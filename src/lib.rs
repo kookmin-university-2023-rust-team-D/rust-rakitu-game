@@ -1,63 +1,43 @@
-use bevy::{prelude::{Component, Vec3, Resource}, time::{Timer, TimerMode}};
-// enemy, player 모듈화
-pub mod enemy;
-pub mod player;
-pub mod turtles;
+use bevy::{prelude::*};
+use bevy_matchbox::prelude::*;
 
-// use bevy::prelude::{Component, Vec3};
+pub struct GgrsConfig;
 
-#[derive(Component)]
-pub struct Player{
-    pub hp: i32,
+impl ggrs::Config for GgrsConfig {
+    type Input = u8;
+    type State = u8;
+    type Address = PeerId;
 }
 
-#[derive(Component)]
-pub struct Enemy{
-    pub level: f32,
-}
-
-#[derive(Component)]
-pub struct Velocity{
-    pub speed: Vec3,
-}
- 
 #[derive(Resource)]
-pub struct TurtleSpawnTimer {
-    pub spawn_timer: Timer,
-    pub annoying_timer: Timer,
+pub struct GameState{
+    pub is_game_over: bool,
+    pub score: i32,
+    pub hp: i32
 }
 
-impl Default for TurtleSpawnTimer {
-    fn default() -> TurtleSpawnTimer {
-        TurtleSpawnTimer {
-            spawn_timer: Timer::from_seconds(TURTLE_SPAWN_TIME, TimerMode::Repeating),
-            annoying_timer: Timer::from_seconds(LAKITU_ANNOYING_TIME, TimerMode::Repeating),
-        }
-    }
-}
 
+#[derive(Resource, Default, Reflect, Hash)]
+#[reflect(Hash)]
+pub struct FrameCount {
+    pub frame: u32,
+}
 
 #[derive(Component)]
 pub struct Turtle{
 }
 
-// #[derive(Component)]
-// pub struct Turtle{
-// }
+#[derive(Default, Reflect, Component)]
+pub struct Velocity{
+    pub speed: Vec3,
+}
 
-// #[derive(Resource)]
-// pub struct TurtleSpawnTimer {
-//     pub timer: Timer,
-// }
-
-// impl Default for TurtleSpawnTimer {
-//     fn default() -> TurtleSpawnTimer {
-//         TurtleSpawnTimer {
-//             timer: Timer::from_seconds(ENEM_SPAWN_TIME, TimerMode::Repeating),
-//         }
-//     }
-// }
-
+#[derive(Component)]
+pub struct Player{
+    pub is_enemy: bool,
+    pub hp: i32,
+    pub handle: usize,
+}
 
 //사용된 전역 변수들
 pub const PLANE_X: f32 = 200.0;
@@ -70,3 +50,10 @@ pub const ENEMY_SPEED: f32 = 300.0;
 pub const NUMBER_OF_ENEMIES: usize = 4;
 pub const TURTLE_SPAWN_TIME: f32 = 2.0;
 pub const LAKITU_ANNOYING_TIME: f32 = 5.0;
+pub const FPS: usize = 60;
+
+pub const INPUT_UP: u8 = 1 << 0;
+pub const INPUT_DOWN: u8 = 1 << 1;
+pub const INPUT_LEFT: u8 = 1 << 2;
+pub const INPUT_RIGHT: u8 = 1 << 3;
+pub const INPUT_TURTLE: u8 = 1 << 4;
