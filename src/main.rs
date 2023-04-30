@@ -139,11 +139,11 @@ pub fn player_movement(
         let (input, _) = inputs[player.handle];
 
         if input & INPUT_RIGHT != 0 {
-            direction.x = 1.;
+            direction.x = 0.55;
             transform.scale.x = 1.0;
         }
         if input & INPUT_LEFT != 0 {
-            direction.x = 1.;
+            direction.x = -0.55;
             transform.scale.x = -1.0;
         }
         if input & INPUT_TURTLE != 0 && (frame_count.frame % 20 == 0){
@@ -180,7 +180,7 @@ pub fn player_movement(
         else if translation.x > x_max {
             translation.x = x_max;
         }
-        transform.translation = Vec3::new(player.velocity, 0.0, 0.0);
+        transform.translation = transform.translation + Vec3::new(player.velocity/ 1.05, 0.0, 0.0);
         // transform.translation = translation;
     }
 }
@@ -204,7 +204,7 @@ pub fn spawn_player(
                 is_enemy: false,
                 hp: 2,
                 handle: 0,
-                velocity: 1.1,
+                velocity: 0.2,
             },
             rip.next(),
             SpriteBundle{
@@ -225,7 +225,7 @@ pub fn spawn_player(
                 is_enemy: true,
                 hp: 2,
                 handle: 1,
-                velocity: 1.1
+                velocity: 0.2
             },
             rip.next(),
             SpriteBundle{
