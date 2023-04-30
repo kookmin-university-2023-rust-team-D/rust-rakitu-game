@@ -1,7 +1,6 @@
-use bevy::{prelude::*, window::PrimaryWindow};
+use bevy::{prelude::*, window::PrimaryWindow, core_pipeline::clear_color::ClearColorConfig};
 use bevy_ggrs::*;
 use rust_rakitu_game::{GameState, PLANE_SIZE, PLAYER_SIZE, PLANE, Lakitu, Velocity, Player, FrameCount};
-
 
 pub fn spawn_plane(
     mut commands: Commands,
@@ -9,19 +8,23 @@ pub fn spawn_plane(
     assert_server: Res<AssetServer>,
 ){
     let window: &Window = window_query.get_single().unwrap();
-    commands.spawn(
-        (
-            SpriteBundle{
-                transform: Transform{
-                    translation: Vec3::new(window.height() / 2.0 , 23.0, 0.0),
-                    scale: PLANE_SIZE,
+    for i in 1..30{
+        let mul = 51.2; 
+        commands.spawn(
+            (
+                SpriteBundle{
+                    transform: Transform{
+                        translation: Vec3::new(window.width()-(mul * i as f32 ) + 26.0, 25.0, 0.0),
+                        // scale: PLANE_SIZE,
+                        ..default()
+                    } ,// z component doesn't matter in 2D game
+                    // texture: assert_server.load("sprites/block_image_cropped.png"),
+                    texture: assert_server.load("sprites/block_image_cropped.png"),
                     ..default()
-                } ,// z component doesn't matter in 2D game
-                texture: assert_server.load("sprites/tile_0002.png"),
-                ..default()
-            },
-        )
-    );
+                },
+            )
+        );
+    }
 }
 
 pub fn spawn_text(
@@ -150,10 +153,10 @@ pub fn spawn_player(
             rip.next(),
             SpriteBundle{
                 transform: Transform{
-                    translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
+                    translation: Vec3::new(window.width() / 3.0 - 10.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/mario_running.png"),
+                    texture: assert_server.load("sprites/mario.png"),
                     ..default()
             },
         )
@@ -232,6 +235,7 @@ pub fn spawn_camera(
     let window = window_query.get_single().unwrap();
     commands.spawn(
         Camera2dBundle{
+            // camera_2d: Camera2d { clear_color: Custom(Color::rgb(0.8, 0.4, 0.2), },
             transform: Transform::from_xyz(window.width() / 2.0, window.height() / 2.0, 0.0),
             ..default()
         }

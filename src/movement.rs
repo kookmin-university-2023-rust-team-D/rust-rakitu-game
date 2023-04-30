@@ -147,7 +147,7 @@ pub fn player_movement(
                 commands.spawn((
                     SpriteBundle {
                         transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
-                        texture: assert_server.load("sprites/old_turtle.png"),
+                        texture: assert_server.load("sprites/turtle_.png"),
                         ..default()
                     },
                     Turtle{

@@ -37,6 +37,7 @@ fn main() {
     .insert_resource(FrameCount { frame: 0 })
     .insert_resource(GameState { is_game_over: false, score: 0, hp: 2})
     .insert_resource(PlayerIds { player_ids: Vec::new()})
+    .insert_resource(ClearColor(Color::rgb(0.5, 0.6, 1.0)))
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
     .add_startup_system(spawn_lakitu)
