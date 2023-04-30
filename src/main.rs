@@ -274,7 +274,7 @@ pub fn spawn_turtle(
         commands.spawn((
             SpriteBundle {
                 transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
-                texture: asset_server.load("sprites/turtle.png"),
+                texture: asset_server.load("sprites/old_turtle.png"),
                 ..default()
             }, 
             Turtle{
@@ -443,7 +443,7 @@ pub fn player_movement(
                 commands.spawn((
                     SpriteBundle {
                         transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
-                        texture: assert_server.load("sprites/turtle.png"),
+                        texture: assert_server.load("sprites/old_turtle.png"),
                         ..default()
                     },
                     Turtle{
@@ -492,7 +492,7 @@ pub fn spawn_player(
                     translation: Vec3::new(window.width() / 3.0, PLAYER_SIZE / 2.0 + PLANE, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/mario_running.png"),
+                    texture: assert_server.load("sprites/mario.png"),
                     ..default()
             },
             GameState{
@@ -517,7 +517,7 @@ pub fn spawn_player(
                     translation: Vec3::new(window.width() / 3.0, window.height() - 100.0, 0.0),
                     ..default()
                 },
-                    texture: assert_server.load("sprites/lakitu.png"),
+                    texture: assert_server.load("sprites/old-lakitu.png"),
                     ..default()
             },
             GameState{
