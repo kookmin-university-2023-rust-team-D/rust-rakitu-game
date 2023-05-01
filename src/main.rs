@@ -35,7 +35,7 @@ fn main() {
         ..default()
     }))
     .insert_resource(FrameCount { frame: 0 })
-    .insert_resource(GameState { is_game_over: false, score: 0, hp: 2})
+    .insert_resource(GameState { is_game_over: false, score: 0, hp: 30})
     .insert_resource(PlayerIds { player_ids: Vec::new()})
     .insert_resource(ClearColor(Color::rgb(0.5, 0.6, 1.0)))
     .add_startup_system(spawn_camera)
@@ -48,7 +48,7 @@ fn main() {
         turtle_movement,
         turtle_hit_player,
         game_end_system,
-        cloud_movement,
+        cloud_movement, 
         set_hp_score
     ))
     .run();   
