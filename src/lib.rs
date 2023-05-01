@@ -35,6 +35,12 @@ pub struct Turtle{
 
 #[derive(Component)]
 pub struct Lakitu{
+    pub is_move: bool,
+}
+
+#[derive(Component)]
+pub struct Cloud{
+    pub is_move: bool,
 }
 
 
@@ -59,6 +65,7 @@ pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SIZE: f32 = 70.0;
 pub const TURTLE_SIZE: f32 = 60.0;
 pub const ENEMY_SPEED: f32 = 300.0;
+pub const CLOUD_SPEED: f32 = 100.0;
 pub const NUMBER_OF_ENEMIES: usize = 4;
 pub const TURTLE_SPAWN_TIME: f32 = 2.0;
 pub const LAKITU_ANNOYING_TIME: f32 = 5.0;

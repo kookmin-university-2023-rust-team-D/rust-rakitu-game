@@ -40,7 +40,6 @@ fn main() {
     .insert_resource(ClearColor(Color::rgb(0.5, 0.6, 1.0)))
     .add_startup_system(spawn_camera)
     .add_startup_system(spawn_plane)
-    .add_startup_system(spawn_lakitu)
     .add_startup_systems((spawn_player, start_matchbox_socket))
     .add_startup_system(spawn_text)
     .add_systems((
@@ -49,7 +48,7 @@ fn main() {
         turtle_movement,
         turtle_hit_player,
         game_end_system,
-        lakitu_movement,
+        cloud_movement,
         set_hp_score
     ))
     .run();   

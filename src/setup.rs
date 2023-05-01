@@ -1,6 +1,6 @@
 use bevy::{prelude::*, window::PrimaryWindow, core_pipeline::clear_color::ClearColorConfig};
 use bevy_ggrs::*;
-use rust_rakitu_game::{GameState, PLANE_SIZE, PLAYER_SIZE, PLANE, Lakitu, Velocity, Player, FrameCount};
+use rust_rakitu_game::{GameState, PLANE_SIZE, PLAYER_SIZE, PLANE, Lakitu, Velocity, Player, FrameCount, Cloud};
 
 pub fn spawn_plane(
     mut commands: Commands,
@@ -27,6 +27,12 @@ pub fn spawn_plane(
     }
     commands.spawn(
         (
+            Cloud{
+                is_move: false
+            },
+            Velocity{
+                speed: Vec3::new(1.0, 0.0, 0.0),
+            },
             SpriteBundle{
                 transform: Transform{
                     translation: Vec3::new(window.width()/ 4.0 + 20.0, window.height()/ 2.0 + 100.0, 0.0),
@@ -41,6 +47,12 @@ pub fn spawn_plane(
     );
     commands.spawn(
         (
+            Cloud{
+                is_move: false
+            },
+            Velocity{
+                speed: Vec3::new(1.0, 0.0, 0.0),
+            },
             SpriteBundle{
                 transform: Transform{
                     translation: Vec3::new(window.width() - 100.0, window.height()/ 2.0 + 100.0, 0.0),
@@ -174,31 +186,32 @@ pub fn set_hp_score(
         
 }
 
-pub fn spawn_lakitu(
-    mut commands: Commands,
-    assert_server: Res<AssetServer>,
-    window_query: Query<&Window, With<PrimaryWindow>>,
-){
-    let window = window_query.get_single().unwrap();
-    commands.spawn(
-        (
-            Lakitu{
-            },
-            SpriteBundle{
-                transform: Transform{
-                    translation: Vec3::new(window.width() / 3.0, window.height() - 100.0, 0.0),
-                    ..default()
-                },
-                    texture: assert_server.load("sprites/lakitu.png"),
-                    ..default()
-            },
-            Velocity{
-                speed: Vec3::new(1.0, 0.0, 0.0),
-            },
-        )
-    );
+// pub fn spawn_lakitu(
+//     mut commands: Commands,
+//     assert_server: Res<AssetServer>,
+//     window_query: Query<&Window, With<PrimaryWindow>>,
+// ){
+//     let window = window_query.get_single().unwrap();
+//     commands.spawn(
+//         (
+//             Lakitu{
+//                 is_move: false
+//             },
+//             SpriteBundle{
+//                 transform: Transform{
+//                     translation: Vec3::new(window.width() / 3.0, window.height() - 100.0, 0.0),
+//                     ..default()
+//                 },
+//                     texture: assert_server.load("sprites/lakitu.png"),
+//                     ..default()
+//             },
+//             Velocity{
+//                 speed: Vec3::new(1.0, 0.0, 0.0),
+//             },
+//         )
+//     );
 
-}
+// }
 
 pub fn spawn_player(
     mut commands: Commands,

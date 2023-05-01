@@ -1,7 +1,7 @@
 use bevy::{prelude::*};
 use bevy_matchbox::prelude::*;
 use bevy_ggrs::*;
-use rust_rakitu_game::{GgrsConfig, PlayerIds};
+use rust_rakitu_game::{GgrsConfig, PlayerIds, Cloud};
 
 pub fn start_matchbox_socket(mut commands: Commands) {
     let room_url = "ws://127.0.0.1:3536/room";
@@ -9,7 +9,12 @@ pub fn start_matchbox_socket(mut commands: Commands) {
     commands.insert_resource(MatchboxSocket::new_ggrs(room_url));
 }
 
-pub fn wait_for_players(mut commands: Commands, mut socket: ResMut<MatchboxSocket<SingleChannel>>, mut resource: ResMut<PlayerIds>) {
+pub fn wait_for_players(
+    mut commands: Commands, 
+    mut socket: ResMut<MatchboxSocket<SingleChannel>>, 
+    mut resource: ResMut<PlayerIds>, 
+    mut cloud_query: Query<&mut Cloud>) 
+    {
     if socket.get_channel(0).is_err() {
         return; // we've already started
     }
@@ -60,5 +65,8 @@ pub fn wait_for_players(mut commands: Commands, mut socket: ResMut<MatchboxSocke
         .expect("failed to start session");
 
     commands.insert_resource(bevy_ggrs::Session::P2PSession(ggrs_session));
+    for mut cloud in cloud_query.iter_mut(){
+        cloud.is_move = true;
+    }
 
 }

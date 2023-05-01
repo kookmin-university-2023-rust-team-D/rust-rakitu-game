@@ -3,25 +3,28 @@ use bevy_ggrs::*;
 
 use rust_rakitu_game::*;
 
-pub fn lakitu_movement(
+pub fn cloud_movement(
     window_query: Query<&Window, With<PrimaryWindow>>,
-    mut enemy_query: Query<(&mut Velocity, &mut Transform),  With<Lakitu>>,
+    mut cloud_query: Query<(&mut Velocity, &mut Transform, &Cloud),  With<Cloud>>,
     time: Res<Time>,
 ){
     //Enemy 컴포넌트를 가진 엔티티들의 속도와 이동 설정
-    for (mut velocity, mut transform) in enemy_query.iter_mut(){
+    for (mut velocity, mut transform, cloud) in cloud_query.iter_mut(){
+        if !(cloud.is_move){
+            continue;
+        }
         let mut direction: Vec3 = Vec3::ZERO;
         let window: &Window = window_query.get_single().unwrap(); 
 
-        let x_min = 15.0;
-        let x_max = window.width() - 15.0;
+        let x_min = 30.0;
+        let x_max = window.width() - 30.0;
         direction += velocity.speed;
 
         if direction.length() > 0.0{
             direction = direction.normalize();
         }
         // 랜덤으로 생성된 속도 적용
-        transform.translation += direction * ENEMY_SPEED * time.delta_seconds();
+        transform.translation += direction * CLOUD_SPEED * time.delta_seconds();
         
         // 벽에 닿았을시, 밖으로 나갈 수 없에 설정
         let mut translation = transform.translation;
