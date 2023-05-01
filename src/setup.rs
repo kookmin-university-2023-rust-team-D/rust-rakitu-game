@@ -229,7 +229,7 @@ pub fn spawn_player(
         (
             Player{
                 is_enemy: false,
-                hp: 2,
+                hp: 20,
                 handle: 0,
                 velocity: 0.2,
             },
@@ -250,7 +250,7 @@ pub fn spawn_player(
         (
             Player{
                 is_enemy: true,
-                hp: 2,
+                hp: 20,
                 handle: 1,
                 velocity: 0.2,
             },

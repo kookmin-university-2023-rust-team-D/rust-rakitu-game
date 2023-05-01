@@ -1,4 +1,4 @@
-player1's score: 13
-player1's survive time: 16
+player1's score: 8
+player1's survive time: 20
 player1: local
-player2: c8018b49-0f44-4958-8280-f438fbe78fd2
+player2: 2e8d85a0-e23a-41f9-8ff8-43749af49b7b

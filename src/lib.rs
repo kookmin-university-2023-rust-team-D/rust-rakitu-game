@@ -30,6 +30,7 @@ pub struct FrameCount {
 
 #[derive(Component)]
 pub struct Turtle{
+    pub is_luigi:bool
 }
 
 

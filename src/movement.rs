@@ -82,11 +82,11 @@ pub fn turtle_hit_player(
     mut commands: Commands,
     mut player_query: Query<(Entity, &Player, &Transform), With<Rollback>>,
     mut gamestate: ResMut<GameState>,
-    enemy_query: Query<(Entity, &Transform), With<Turtle>>,
+    enemy_query: Query<(Entity, &Turtle, &Transform), With<Turtle>>,
     frame_count: ResMut<FrameCount>
 ) {
     for (player_entity, player, player_transform) in  player_query.iter_mut() {
-        for (turtle_entity, enemy_transform) in enemy_query.iter() {
+        for (turtle_entity, turtle, enemy_transform) in enemy_query.iter() {
             let distance = player_transform
                 .translation
                 .distance(enemy_transform.translation);
@@ -95,7 +95,12 @@ pub fn turtle_hit_player(
             if distance < (player_radius + enemy_radius) && !(player.is_enemy) {
                 println!("Enemy hit player!");
                 commands.entity(turtle_entity).despawn();
-                gamestate.hp -= 1;
+                if turtle.is_luigi{
+                    gamestate.hp += 1;
+                }
+                else{
+                    gamestate.hp -= 1;
+                }
                 if gamestate.hp <= 0 {
                     gamestate.is_game_over = true;
                     println!("{}", gamestate.is_game_over);
@@ -146,19 +151,38 @@ pub fn player_movement(
             if player.is_enemy{
                 let turtle_x = transform.translation.x;
                 let turtle_y = transform.translation.y;
-                println!("turtle spawn");
-                commands.spawn((
-                    SpriteBundle {
-                        transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
-                        texture: assert_server.load("sprites/turtle_.png"),
-                        ..default()
-                    },
-                    Turtle{
-                    },
-                    Velocity{
-                        speed: Vec3::new(0.0, -1.0, 0.0),
-                    },
-                ));
+                println!("turtle spawn"); 
+                println!("{} !!!", gamestate.score);
+                if gamestate.score >= 5 && gamestate.score % 5 == 0 {
+                    commands.spawn((
+                        SpriteBundle {
+                            transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
+                            texture: assert_server.load("sprites/luigi.png"),
+                            ..default()
+                        },
+                        Turtle{
+                            is_luigi: true
+                        },
+                        Velocity{
+                            speed: Vec3::new(0.0, -1.0, 0.0),
+                        },
+                    ));
+                }
+                else{
+                    commands.spawn((
+                        SpriteBundle {
+                            transform: Transform::from_xyz(turtle_x, turtle_y, 0.0),
+                            texture: assert_server.load("sprites/turtle_.png"),
+                            ..default()
+                        },
+                        Turtle{
+                            is_luigi: false
+                        },
+                        Velocity{
+                            speed: Vec3::new(0.0, -1.0, 0.0),
+                        },
+                    ));
+                }
             }
         }
         if direction == Vec2::ZERO {
@@ -167,7 +191,7 @@ pub fn player_movement(
         else{
             player.velocity = player.velocity + direction.x;
         }
-        println!("player {:?} moved", player.handle); 
+        // println!("player {:?} moved", player.handle); 
         // let move_speed = 30.0;
         // let move_delta = (direction * move_speed).extend(0.);
         let mut translation = transform.translation + Vec3::new(player.velocity/ 1.05, 0.0, 0.0);
