@@ -15,9 +15,13 @@ git clone https://github.com/kookmin-university-2023-rust-team-D/rust-rakitu-gam
 cd rust-rakitu-game
 ```
 
-혼자 플레이 해보기
+## 혼자 플레이 해보기
 로컬에서 서버, 클라이언트 역할을 하는 터미널을 만들어야 합니다.
 터미널 3개를 준비해주시고 각각에 맞는 코드를 실행합니다.
+
+## p2p로 다른 컴퓨터와 경쟁해보기
+matchbox_server를 열어줄 컴퓨터와 각각의 클라이언트는 이 서버의 ip address를 알아야합니다.
+
 
 ## 프로그램 실행
 ```sh
@@ -33,7 +37,7 @@ matchbox_server
 --------
 
 ```sh
-#clients: player1, player2 모두 다른 터미널에서 실행
+# clients: player1, player2 각각 다른 터미널에서 아래 코드를 실행
 cargo run
 ```
 
