@@ -1,14 +1,17 @@
 use bevy::{prelude::*};
 use bevy_matchbox::prelude::*;
 use bevy_ggrs::*;
-use rust_rakitu_game::{GgrsConfig, PlayerIds, Cloud};
+use rust_rakitu_game::{GgrsConfig, PlayerIds, Cloud, Server};
 
-pub fn start_matchbox_socket(mut commands: Commands) {
-    let room_url = "ws://127.0.0.1:3536/room";
+pub fn start_matchbox_socket(mut commands: Commands, mut server_address: ResMut<Server>) {
+    let ip = server_address.address.clone();    
+    let room_url = format!("ws://{}:3536/room", ip); 
+    // let room_url = format("ws://{127.0.0.1}:3536/room");
+
     info!("connecting to matchbox server: {:?}", room_url);
     commands.insert_resource(MatchboxSocket::new_ggrs(room_url));
 }
-
+ 
 pub fn wait_for_players(
     mut commands: Commands, 
     mut socket: ResMut<MatchboxSocket<SingleChannel>>, 

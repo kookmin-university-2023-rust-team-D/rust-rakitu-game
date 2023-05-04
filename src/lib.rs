@@ -10,6 +10,11 @@ impl ggrs::Config for GgrsConfig {
 }
 
 #[derive(Resource)]
+pub struct Server{
+    pub address: String,
+} 
+
+#[derive(Resource)]
 pub struct GameState{
     pub is_game_over: bool,
     pub score: i32,
