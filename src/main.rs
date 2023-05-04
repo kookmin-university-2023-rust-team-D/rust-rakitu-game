@@ -1,8 +1,9 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 use rust_rakitu_game::*;
-
 //use bevy_matchbox::prelude::*;
 use bevy_ggrs::*;
+
+use std::env;
 
 mod filewriter;
 mod input;
@@ -18,6 +19,20 @@ use p2p::*;
 use movement::*;
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+
+    // 벡터에서 두 번째 인자를 가져와 변수에 저장합니다.
+    let mut second_arg = args.get(1).unwrap_or(&String::new()).clone();
+
+    // 두 번째 인자가 존재하는 경우에만 출력합니다.
+    if !second_arg.is_empty() {
+        println!("두 번째 인자: {}", second_arg);
+    } else {
+        println!("두 번째 인자가 존재하지 않습니다.");
+        second_arg = "127.0.0.1".to_string();
+    }
+
+
     let mut app = App::new();
     GGRSPlugin::<GgrsConfig>::new()
         .with_input_system(input)
@@ -34,6 +49,7 @@ fn main() {
         }),
         ..default()
     }))
+    .insert_resource(Server{address: second_arg})
     .insert_resource(FrameCount { frame: 0 })
     .insert_resource(GameState { is_game_over: false, score: 0, hp: 30})
     .insert_resource(PlayerIds { player_ids: Vec::new()})
